@@ -18,7 +18,7 @@ export default function LoginPage() {
     try {
       const result = await login(email, password)
       if (result.success) {
-        navigate('/dashboard')
+        navigate(result.role === 'viewer' ? '/frontend' : '/dashboard')
       } else {
         setError(result.error || 'Login failed')
       }

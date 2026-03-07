@@ -30,6 +30,13 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <Link
+          to="/frontend"
+          className="block px-4 py-2 rounded-lg font-medium transition bg-blue-500 text-white hover:bg-blue-600 mb-2"
+        >
+          Frontend
+        </Link>
+
         <Link to="/dashboard" className={linkClass('/dashboard')}>
           Dashboard
         </Link>

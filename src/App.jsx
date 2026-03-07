@@ -9,6 +9,7 @@ import Settings from './components/pages/Settings'
 import Content from './components/pages/Content'
 import ContentBlocks from './components/pages/ContentBlocks'
 import Pages from './components/pages/Pages'
+import Frontend from './components/pages/Frontend'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="/frontend" element={<Frontend />} />
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/content" element={<Content />} />
