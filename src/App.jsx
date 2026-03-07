@@ -6,6 +6,9 @@ import DashboardLayout from './components/layout/DashboardLayout'
 import Dashboard from './components/pages/Dashboard'
 import Profile from './components/pages/Profile'
 import Settings from './components/pages/Settings'
+import Content from './components/pages/Content'
+import ContentBlocks from './components/pages/ContentBlocks'
+import Pages from './components/pages/Pages'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -18,6 +21,9 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/content" element={<Content />} />
+              <Route path="/content-blocks" element={<ContentBlocks />} />
+              <Route path="/pages" element={<Pages />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
