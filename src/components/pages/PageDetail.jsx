@@ -390,13 +390,20 @@ function MededelingenRenderer({ settings, items, blockId }) {
           {visibleItems.map((item) => (
             <div
               key={item.id}
-              className="border border-gray-200 rounded-xl bg-white p-4 md:p-5"
+              className={`border rounded-xl bg-white p-4 md:p-5 ${
+                item.is_urgent ? 'border-red-200 bg-red-50/30' : 'border-gray-200'
+              }`}
             >
               {/* Header: title + badges */}
               <div className="flex items-start justify-between gap-3 mb-2">
-                {item.title && (
-                  <h3 className="font-semibold text-gray-900 leading-snug">{item.title}</h3>
-                )}
+                <div className="flex items-center gap-2 min-w-0">
+                  {item.is_urgent && (
+                    <span className="text-red-500 text-lg leading-none shrink-0" title="Belangrijk">❗</span>
+                  )}
+                  {item.title && (
+                    <h3 className="font-semibold text-gray-900 leading-snug">{item.title}</h3>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {isNew(item) && (
                     <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
@@ -415,15 +422,13 @@ function MededelingenRenderer({ settings, items, blockId }) {
                 dangerouslySetInnerHTML={{ __html: item.message }}
               />
 
-              {/* Footer: author */}
-              {item.author_name && (
-                <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
-                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                  </svg>
-                  <span className="text-xs text-gray-500">{item.author_name}</span>
-                </div>
-              )}
+              {/* Footer: author + date */}
+              <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                <span className="text-xs text-gray-500">{item.author_name || 'Onbekend'}</span>
+              </div>
             </div>
           ))}
         </div>
