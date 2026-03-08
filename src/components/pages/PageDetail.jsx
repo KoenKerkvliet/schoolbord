@@ -33,7 +33,11 @@ export default function PageDetail() {
       }
 
       const { data, error } = await query.single()
-      if (error) throw error
+      if (error) {
+        console.error('PageDetail: page query error:', error)
+        throw error
+      }
+      console.log('PageDetail: page loaded:', data?.title, data?.id)
       setPage(data)
 
       // Load sections
@@ -43,6 +47,7 @@ export default function PageDetail() {
         .eq('page_id', data.id)
         .order('position', { ascending: true })
 
+      console.log('PageDetail: sections loaded:', sectionsData?.length || 0)
       setSections(sectionsData || [])
 
       // Load column blocks and content blocks separately (more reliable than FK join)
@@ -55,7 +60,8 @@ export default function PageDetail() {
           .in('section_id', sectionIds)
           .order('position', { ascending: true })
 
-        if (cbError) console.error('Error loading column blocks:', cbError)
+        if (cbError) console.error('PageDetail: column blocks error:', cbError)
+        console.log('PageDetail: column blocks loaded:', cbData?.length || 0)
 
         const cbRows = cbData || []
 
@@ -67,7 +73,8 @@ export default function PageDetail() {
             .select('*')
             .in('id', blockIds)
 
-          if (blocksError) console.error('Error loading content blocks:', blocksError)
+          if (blocksError) console.error('PageDetail: content blocks error:', blocksError)
+          console.log('PageDetail: content blocks loaded:', blocksData?.length || 0)
 
           // Merge content_blocks into column block rows
           const blocksMap = {}
@@ -86,11 +93,14 @@ export default function PageDetail() {
             .map((cb) => cb.content_blocks.id)
 
           if (mededelingenBlockIds.length > 0) {
+            const now = new Date().toISOString()
             const { data: annData } = await supabase
               .from('announcements')
               .select('*')
               .in('content_block_id', mededelingenBlockIds)
-              .order('created_at', { ascending: false })
+              .lte('publish_at', now)
+              .or(`expires_at.is.null,expires_at.gte.${now}`)
+              .order('publish_at', { ascending: false })
 
             const grouped = {}
             for (const ann of annData || []) {
@@ -321,9 +331,15 @@ function MededelingenRenderer({ settings, items }) {
         <div className="space-y-3">
           {visibleItems.map((item) => (
             <div key={item.id} className="border-l-4 border-blue-500 pl-4 py-2">
-              <p className="text-gray-800">{item.message}</p>
+              {item.title && (
+                <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
+              )}
+              <div
+                className="text-gray-800 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: item.message }}
+              />
               <p className="text-xs text-gray-400 mt-1">
-                {new Date(item.created_at).toLocaleDateString('nl-NL', {
+                {new Date(item.publish_at || item.created_at).toLocaleDateString('nl-NL', {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric',

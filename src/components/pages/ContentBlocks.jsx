@@ -305,7 +305,7 @@ function BlockSettings({ block, onUpdate }) {
     case 'hero':
       return <HeroSettings settings={block.settings} onUpdate={onUpdate} />
     case 'mededelingen':
-      return <MededelingenSettings block={block} settings={block.settings} onUpdate={onUpdate} />
+      return <MededelingenSettings settings={block.settings} onUpdate={onUpdate} />
     default:
       return <GenericSettings settings={block.settings} onUpdate={onUpdate} />
   }
@@ -524,72 +524,17 @@ function HeroPreview({ settings }) {
 // ============================================================
 // Mededelingen Settings
 // ============================================================
-function MededelingenSettings({ block, settings, onUpdate }) {
-  const { user } = useAuth()
+function MededelingenSettings({ settings, onUpdate }) {
   const [local, setLocal] = useState(settings)
-  const [announcements, setAnnouncements] = useState([])
-  const [newMessage, setNewMessage] = useState('')
-  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true)
 
   useEffect(() => {
     setLocal(settings)
   }, [settings])
 
-  useEffect(() => {
-    loadAnnouncements()
-  }, [block.id])
-
-  const loadAnnouncements = async () => {
-    try {
-      setLoadingAnnouncements(true)
-      const { data, error } = await supabase
-        .from('announcements')
-        .select('*')
-        .eq('content_block_id', block.id)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setAnnouncements(data || [])
-    } catch (err) {
-      console.error('Fout bij laden mededelingen:', err)
-    } finally {
-      setLoadingAnnouncements(false)
-    }
-  }
-
   const update = (key, value) => {
     const updated = { ...local, [key]: value }
     setLocal(updated)
     onUpdate(updated)
-  }
-
-  const addAnnouncement = async (e) => {
-    e.preventDefault()
-    if (!newMessage.trim()) return
-
-    try {
-      const { error } = await supabase.from('announcements').insert({
-        content_block_id: block.id,
-        message: newMessage.trim(),
-        created_by: user.id,
-      })
-
-      if (error) throw error
-      setNewMessage('')
-      await loadAnnouncements()
-    } catch (err) {
-      console.error('Fout bij toevoegen mededeling:', err)
-    }
-  }
-
-  const deleteAnnouncement = async (id) => {
-    try {
-      const { error } = await supabase.from('announcements').delete().eq('id', id)
-      if (error) throw error
-      await loadAnnouncements()
-    } catch (err) {
-      console.error('Fout bij verwijderen mededeling:', err)
-    }
   }
 
   return (
@@ -622,61 +567,9 @@ function MededelingenSettings({ block, settings, onUpdate }) {
         />
       </div>
 
-      {/* Announcements Management */}
-      <div className="border-t pt-5">
-        <h4 className="font-semibold text-gray-800 mb-3">Berichten</h4>
-
-        <form onSubmit={addAnnouncement} className="flex flex-col sm:flex-row gap-3 mb-4">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Nieuwe mededeling..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-          />
-          <button
-            type="submit"
-            disabled={!newMessage.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
-          >
-            Toevoegen
-          </button>
-        </form>
-
-        {loadingAnnouncements ? (
-          <p className="text-sm text-gray-400">Laden...</p>
-        ) : announcements.length === 0 ? (
-          <p className="text-sm text-gray-400">Nog geen mededelingen.</p>
-        ) : (
-          <div className="space-y-2">
-            {announcements.map((a) => (
-              <div
-                key={a.id}
-                className="flex items-start justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">{a.message}</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {new Date(a.created_at).toLocaleDateString('nl-NL', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
-                <button
-                  onClick={() => deleteAnnouncement(a.id)}
-                  className="text-red-500 hover:text-red-700 text-sm font-medium ml-3"
-                >
-                  Verwijder
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <p className="text-sm text-gray-500 italic">
+        Berichten beheren doe je via de <a href="#/content" className="text-blue-600 hover:underline">Content</a> pagina.
+      </p>
     </div>
   )
 }
