@@ -63,7 +63,7 @@ export function AuthProvider({ children }) {
 
     const checkAuth = async () => {
       try {
-        const { data, error } = await withTimeout(authService.getSession(), 5000)
+        const { data, error } = await authService.getSession()
         if (error) throw error
         const sessionUser = data?.session?.user || null
         setUser(sessionUser)
@@ -72,10 +72,6 @@ export function AuthProvider({ children }) {
         }
       } catch (err) {
         console.error('Auth check error:', err)
-        // On timeout, clear session so user can re-login
-        setUser(null)
-        setUserRole(null)
-        setOrganizationId(null)
       } finally {
         initialCheckDone = true
         setLoading(false)
