@@ -13,6 +13,13 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const withTimeout = (promise, ms) => {
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout')), ms)
+    )
+    return Promise.race([promise, timeout])
+  }
+
   const fetchUserRole = async (userId, email) => {
     if (email === SUPER_ADMIN_EMAIL) {
       setUserRole('super_admin')
@@ -21,11 +28,14 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('user_organization_roles')
-        .select('roles (name), organization_id')
-        .eq('user_id', userId)
-        .limit(1)
+      const { data, error } = await withTimeout(
+        supabase
+          .from('user_organization_roles')
+          .select('roles (name), organization_id')
+          .eq('user_id', userId)
+          .limit(1),
+        5000
+      )
 
       if (error) {
         console.error('Fout bij ophalen gebruikersrol:', error)
@@ -41,7 +51,7 @@ export function AuthProvider({ children }) {
       setOrganizationId(orgId)
       return { role, organizationId: orgId }
     } catch (err) {
-      console.error('Onverwachte fout bij ophalen rol:', err)
+      console.error('Fout bij ophalen rol (timeout of netwerk):', err)
       setUserRole(null)
       setOrganizationId(null)
       return { role: null, organizationId: null }
@@ -53,7 +63,7 @@ export function AuthProvider({ children }) {
 
     const checkAuth = async () => {
       try {
-        const { data, error } = await authService.getSession()
+        const { data, error } = await withTimeout(authService.getSession(), 5000)
         if (error) throw error
         const sessionUser = data?.session?.user || null
         setUser(sessionUser)
@@ -62,7 +72,10 @@ export function AuthProvider({ children }) {
         }
       } catch (err) {
         console.error('Auth check error:', err)
-        setError(err.message)
+        // On timeout, clear session so user can re-login
+        setUser(null)
+        setUserRole(null)
+        setOrganizationId(null)
       } finally {
         initialCheckDone = true
         setLoading(false)
@@ -70,6 +83,11 @@ export function AuthProvider({ children }) {
     }
 
     checkAuth()
+
+    // Safety: force loading off after 8 seconds no matter what
+    const safetyTimer = setTimeout(() => {
+      setLoading(false)
+    }, 8000)
 
     const { data } = authService.onAuthStateChange(async (event, session) => {
       // Skip INITIAL_SESSION event - checkAuth handles it
@@ -87,6 +105,7 @@ export function AuthProvider({ children }) {
     })
 
     return () => {
+      clearTimeout(safetyTimer)
       data?.subscription?.unsubscribe()
     }
   }, [])
