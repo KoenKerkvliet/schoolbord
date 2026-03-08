@@ -248,10 +248,11 @@ function BlockRenderer({ block, announcements }) {
         <MededelingenRenderer
           settings={parsedBlock.settings}
           items={announcements[parsedBlock.id] || []}
+          blockId={parsedBlock.id}
         />
       )
     case 'weer':
-      return <GenericBlockRenderer title={parsedBlock.settings?.title || 'Weer'} type="weer" />
+      return <WeerRenderer settings={parsedBlock.settings} />
     case 'nieuws':
       return <GenericBlockRenderer title={parsedBlock.settings?.title || 'Nieuws'} type="nieuws" />
     case 'beschikbaarheid':
@@ -283,7 +284,11 @@ function HeroRenderer({ settings, fullWidth }) {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }
-      : { backgroundColor: s.backgroundColor || '#1e40af' }
+      : s.backgroundType === 'gradient'
+        ? {
+            background: `linear-gradient(${s.gradientDirection || 'to bottom'}, ${s.gradientColor1 || '#1e40af'}, ${s.gradientColor2 || '#7c3aed'})`,
+          }
+        : { backgroundColor: s.backgroundColor || '#1e40af' }
 
   return (
     <div
@@ -317,10 +322,33 @@ function HeroRenderer({ settings, fullWidth }) {
 // ============================================================
 // Mededelingen Renderer
 // ============================================================
-function MededelingenRenderer({ settings, items }) {
+function MededelingenRenderer({ settings, items, blockId }) {
   const s = settings || {}
   const maxItems = s.maxItems || 5
   const visibleItems = items.slice(0, maxItems)
+
+  // Track last-seen timestamp in localStorage
+  const storageKey = `mededelingen_seen_${blockId}`
+  const [lastSeen] = useState(() => {
+    const stored = localStorage.getItem(storageKey)
+    return stored ? new Date(stored) : null
+  })
+
+  // Update lastSeen after 2s so badges disappear on next visit
+  useEffect(() => {
+    if (!blockId || visibleItems.length === 0) return
+    const timer = setTimeout(() => {
+      localStorage.setItem(storageKey, new Date().toISOString())
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [storageKey, blockId, visibleItems.length])
+
+  const isNew = (item) => {
+    if (!lastSeen) return true
+    return new Date(item.publish_at || item.created_at) > lastSeen
+  }
+
+  const newCount = visibleItems.filter(isNew).length
 
   const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString('nl-NL', {
@@ -331,7 +359,14 @@ function MededelingenRenderer({ settings, items }) {
 
   return (
     <div>
-      <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">{s.title || 'Mededelingen'}</h2>
+      <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">
+        {s.title || 'Mededelingen'}
+        {newCount > 0 && (
+          <span className="ml-2 text-sm font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full align-middle">
+            {newCount} nieuw
+          </span>
+        )}
+      </h2>
       {visibleItems.length === 0 ? (
         <p className="text-gray-400 text-sm italic">Geen mededelingen.</p>
       ) : (
@@ -341,14 +376,21 @@ function MededelingenRenderer({ settings, items }) {
               key={item.id}
               className="border border-gray-200 rounded-xl bg-white p-4 md:p-5"
             >
-              {/* Header: title + date badge */}
+              {/* Header: title + badges */}
               <div className="flex items-start justify-between gap-3 mb-2">
                 {item.title && (
                   <h3 className="font-semibold text-gray-900 leading-snug">{item.title}</h3>
                 )}
-                <span className="shrink-0 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">
-                  {formatDate(item.publish_at || item.created_at)}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  {isNew(item) && (
+                    <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      Nieuw
+                    </span>
+                  )}
+                  <span className="text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">
+                    {formatDate(item.publish_at || item.created_at)}
+                  </span>
+                </div>
               </div>
 
               {/* Body */}
@@ -375,14 +417,171 @@ function MededelingenRenderer({ settings, items }) {
 }
 
 // ============================================================
-// Generic Block Renderer (weer, nieuws, beschikbaarheid, aanwezigheid)
+// Weer Renderer (Open-Meteo Weather Widget)
+// ============================================================
+const WMO_CODES = {
+  0: { desc: 'Helder', icon: '☀️' },
+  1: { desc: 'Overwegend helder', icon: '🌤️' },
+  2: { desc: 'Gedeeltelijk bewolkt', icon: '⛅' },
+  3: { desc: 'Bewolkt', icon: '☁️' },
+  45: { desc: 'Mist', icon: '🌫️' },
+  48: { desc: 'Rijpmist', icon: '🌫️' },
+  51: { desc: 'Lichte motregen', icon: '🌦️' },
+  53: { desc: 'Motregen', icon: '🌦️' },
+  55: { desc: 'Dichte motregen', icon: '🌧️' },
+  61: { desc: 'Lichte regen', icon: '🌦️' },
+  63: { desc: 'Regen', icon: '🌧️' },
+  65: { desc: 'Zware regen', icon: '🌧️' },
+  66: { desc: 'Lichte ijzel', icon: '🌨️' },
+  67: { desc: 'Zware ijzel', icon: '🌨️' },
+  71: { desc: 'Lichte sneeuw', icon: '🌨️' },
+  73: { desc: 'Sneeuw', icon: '❄️' },
+  75: { desc: 'Zware sneeuw', icon: '❄️' },
+  77: { desc: 'Sneeuwkorrels', icon: '❄️' },
+  80: { desc: 'Lichte buien', icon: '🌦️' },
+  81: { desc: 'Buien', icon: '🌧️' },
+  82: { desc: 'Zware buien', icon: '🌧️' },
+  85: { desc: 'Lichte sneeuwbuien', icon: '🌨️' },
+  86: { desc: 'Zware sneeuwbuien', icon: '🌨️' },
+  95: { desc: 'Onweer', icon: '⛈️' },
+  96: { desc: 'Onweer met hagel', icon: '⛈️' },
+  99: { desc: 'Onweer met zware hagel', icon: '⛈️' },
+}
+
+function getWeatherInfo(code) {
+  return WMO_CODES[code] || { desc: 'Onbekend', icon: '❓' }
+}
+
+function WeerRenderer({ settings }) {
+  const s = settings || {}
+  const location = s.location || ''
+
+  const [weather, setWeather] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!location.trim()) return
+
+    let cancelled = false
+    const fetchWeather = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const geoRes = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location.trim())}&count=1&language=nl`
+        )
+        const geoData = await geoRes.json()
+        if (!geoData.results?.length) throw new Error(`Locatie "${location}" niet gevonden`)
+
+        const { latitude, longitude, name: cityName } = geoData.results[0]
+        const weatherRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Europe/Amsterdam&forecast_days=5`
+        )
+        const data = await weatherRes.json()
+        if (!cancelled) setWeather({ ...data, cityName })
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Kon weerdata niet ophalen')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    fetchWeather()
+    return () => { cancelled = true }
+  }, [location])
+
+  if (!location.trim()) {
+    return (
+      <div className="bg-white rounded-lg shadow p-4 md:p-6">
+        <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Weer</h2>
+        <p className="text-gray-400 text-sm italic">Geen locatie ingesteld.</p>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow p-4 md:p-6">
+        <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Weer</h2>
+        <p className="text-gray-500 text-sm">Weerdata laden...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow p-4 md:p-6">
+        <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Weer</h2>
+        <p className="text-red-500 text-sm">{error}</p>
+      </div>
+    )
+  }
+
+  if (!weather) return null
+
+  const cur = weather.current
+  const daily = weather.daily
+  const curInfo = getWeatherInfo(cur.weather_code)
+
+  const dayName = (dateStr, i) => {
+    if (i === 0) return 'Vandaag'
+    if (i === 1) return 'Morgen'
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('nl-NL', { weekday: 'short' })
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Current weather */}
+      <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 md:p-6 text-white">
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <h2 className="text-lg md:text-xl font-bold">{weather.cityName}</h2>
+            <p className="text-white/80 text-sm">{curInfo.desc}</p>
+          </div>
+          <span className="text-3xl md:text-4xl">{curInfo.icon}</span>
+        </div>
+        <div className="text-3xl md:text-4xl font-bold mb-3">
+          {Math.round(cur.temperature_2m)}°C
+        </div>
+        <div className="flex gap-4 text-sm text-white/80">
+          <span>💨 {Math.round(cur.wind_speed_10m)} km/u</span>
+          <span>💧 {cur.relative_humidity_2m}%</span>
+        </div>
+      </div>
+
+      {/* 5-day forecast */}
+      <div className="p-4 md:p-5">
+        <div className="grid grid-cols-5 gap-2 text-center">
+          {daily.time.map((date, i) => {
+            const dayInfo = getWeatherInfo(daily.weather_code[i])
+            return (
+              <div key={date} className="py-2">
+                <div className="text-xs font-medium text-gray-500 mb-1">{dayName(date, i)}</div>
+                <div className="text-xl mb-1">{dayInfo.icon}</div>
+                <div className="text-sm font-semibold text-gray-900">
+                  {Math.round(daily.temperature_2m_max[i])}°
+                </div>
+                <div className="text-xs text-gray-400">
+                  {Math.round(daily.temperature_2m_min[i])}°
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Generic Block Renderer (nieuws, beschikbaarheid, aanwezigheid)
 // ============================================================
 function GenericBlockRenderer({ title, type }) {
   return (
     <div className="bg-white rounded-lg shadow p-4 md:p-6">
       <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">{title}</h2>
       <p className="text-gray-400 text-sm italic">
-        {type === 'weer' && 'Weerswidget wordt binnenkort toegevoegd.'}
         {type === 'nieuws' && 'Nieuwswidget wordt binnenkort toegevoegd.'}
         {type === 'beschikbaarheid' && 'Beschikbaarheidsoverzicht wordt binnenkort toegevoegd.'}
         {type === 'aanwezigheid' && 'Aanwezigheidsoverzicht wordt binnenkort toegevoegd.'}

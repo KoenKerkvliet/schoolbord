@@ -364,6 +364,16 @@ function HeroSettings({ settings, onUpdate }) {
             <input
               type="radio"
               name="bgType"
+              checked={local.backgroundType === 'gradient'}
+              onChange={() => update('backgroundType', 'gradient')}
+              className="text-blue-600"
+            />
+            <span className="text-sm text-gray-700">Kleurverloop</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="bgType"
               checked={local.backgroundType === 'image'}
               onChange={() => update('backgroundType', 'image')}
               className="text-blue-600"
@@ -389,6 +399,70 @@ function HeroSettings({ settings, onUpdate }) {
               onChange={(e) => update('backgroundColor', e.target.value)}
               className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
+          </div>
+        </div>
+      ) : local.backgroundType === 'gradient' ? (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kleur 1</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={local.gradientColor1 || '#1e40af'}
+                onChange={(e) => update('gradientColor1', e.target.value)}
+                className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+              />
+              <input
+                type="text"
+                value={local.gradientColor1 || '#1e40af'}
+                onChange={(e) => update('gradientColor1', e.target.value)}
+                className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kleur 2</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={local.gradientColor2 || '#7c3aed'}
+                onChange={(e) => update('gradientColor2', e.target.value)}
+                className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+              />
+              <input
+                type="text"
+                value={local.gradientColor2 || '#7c3aed'}
+                onChange={(e) => update('gradientColor2', e.target.value)}
+                className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Richting</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'to bottom', label: '↓' },
+                { value: 'to top', label: '↑' },
+                { value: 'to right', label: '→' },
+                { value: 'to left', label: '←' },
+                { value: 'to bottom right', label: '↘' },
+                { value: 'to bottom left', label: '↙' },
+              ].map((dir) => (
+                <button
+                  key={dir.value}
+                  type="button"
+                  onClick={() => update('gradientDirection', dir.value)}
+                  className={`w-10 h-10 rounded-lg text-lg font-medium transition ${
+                    (local.gradientDirection || 'to bottom') === dir.value
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  title={dir.value}
+                >
+                  {dir.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       ) : (
@@ -496,7 +570,11 @@ function HeroPreview({ settings }) {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }
-      : { backgroundColor: settings.backgroundColor || '#1e40af' }
+      : settings.backgroundType === 'gradient'
+        ? {
+            background: `linear-gradient(${settings.gradientDirection || 'to bottom'}, ${settings.gradientColor1 || '#1e40af'}, ${settings.gradientColor2 || '#7c3aed'})`,
+          }
+        : { backgroundColor: settings.backgroundColor || '#1e40af' }
 
   return (
     <div
