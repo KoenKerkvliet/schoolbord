@@ -186,15 +186,15 @@ export default function Pages() {
   }
 
   if (loading && pages.length === 0) {
-    return <div className="p-8 text-gray-600">Laden...</div>
+    return <div className="p-4 md:p-8 text-gray-600">Laden...</div>
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-4xl">
-        <div className="flex justify-between items-start mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Pagina's</h1>
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">Pagina's</h1>
             <p className="text-gray-600">Beheer je website pagina's</p>
           </div>
           {!showForm && (
@@ -300,7 +300,7 @@ export default function Pages() {
         )}
 
         {pages.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-400">
+          <div className="bg-white rounded-lg shadow p-6 md:p-8 text-center text-gray-400">
             Geen pagina's nog. Maak je eerste pagina aan!
           </div>
         ) : (
@@ -308,16 +308,16 @@ export default function Pages() {
             {pages.map((page) => (
               <div
                 key={page.id}
-                className="bg-white rounded-lg shadow p-6 flex items-start justify-between"
+                className="bg-white rounded-lg shadow p-4 md:p-6 flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4"
               >
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-1">
                     {page.title}
                   </h3>
                   <p className="text-sm text-gray-600 mb-2">
-                    Slug: <code className="bg-gray-100 px-2 py-1 rounded">{page.slug}</code>
+                    Slug: <code className="bg-gray-100 px-2 py-1 rounded text-xs md:text-sm break-all">{page.slug}</code>
                   </p>
-                  <div className="flex gap-4 text-sm text-gray-500">
+                  <div className="flex flex-col sm:flex-row sm:gap-4 gap-1 text-sm text-gray-500">
                     <span>
                       Status: <span className={page.is_published ? 'text-green-600 font-medium' : 'text-gray-400 font-medium'}>
                         {page.is_published ? '✓ Gepubliceerd' : '○ Concept'}
@@ -329,16 +329,16 @@ export default function Pages() {
                   </div>
                 </div>
 
-                <div className="flex gap-2 ml-4">
+                <div className="flex flex-wrap gap-2">
                   <Link
                     to={`/pages/${page.id}/edit`}
-                    className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-sm font-medium transition"
+                    className="px-3 py-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-sm font-medium transition"
                   >
                     Secties
                   </Link>
                   <button
                     onClick={() => togglePublish(page)}
-                    className={`px-3 py-1 rounded text-sm font-medium transition ${
+                    className={`px-3 py-2 rounded text-sm font-medium transition ${
                       page.is_published
                         ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         : 'bg-green-100 text-green-700 hover:bg-green-200'
@@ -348,13 +348,13 @@ export default function Pages() {
                   </button>
                   <button
                     onClick={() => handleEdit(page)}
-                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm font-medium transition"
+                    className="px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm font-medium transition"
                   >
                     Bewerk
                   </button>
                   <button
                     onClick={() => handleDelete(page.id)}
-                    className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm font-medium transition"
+                    className="px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm font-medium transition"
                   >
                     Verwijder
                   </button>

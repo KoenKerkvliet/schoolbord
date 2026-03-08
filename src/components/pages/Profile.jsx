@@ -4,11 +4,11 @@ export default function Profile() {
   const { user } = useAuth()
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-2xl">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">Profiel</h1>
+        <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">Profiel</h1>
 
-        <div className="bg-white rounded-lg shadow p-8">
+        <div className="bg-white rounded-lg shadow p-5 md:p-8">
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

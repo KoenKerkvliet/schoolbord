@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../../services/supabaseClient'
 import { useAuth } from '../../context/AuthContext'
-import { LAYOUTS } from './SectionLayoutPicker'
+import { LAYOUTS, GRID_COLS_RESPONSIVE, COL_SPAN_RESPONSIVE } from './SectionLayoutPicker'
 import { getBlockType } from './blockTypes'
 
 export default function PageDetail() {
@@ -173,19 +173,17 @@ export default function PageDetail() {
               return (
                 <div
                   key={section.id}
-                  className="max-w-7xl mx-auto px-6 py-4"
+                  className="max-w-7xl mx-auto px-4 md:px-6 py-4"
                 >
                   <div
-                    className="grid gap-4"
-                    style={{ gridTemplateColumns: `repeat(${layoutConfig.gridCols}, 1fr)` }}
+                    className={`grid gap-4 grid-cols-1 ${GRID_COLS_RESPONSIVE[layoutConfig.gridCols] || ''}`}
                   >
                     {layoutConfig.columns.map((col, colIdx) => {
                       const blocksInCol = getColumnBlocks(section.id, colIdx)
                       return (
                         <div
                           key={colIdx}
-                          className="min-h-[60px]"
-                          style={{ gridColumn: `span ${col.span}` }}
+                          className={`min-h-[60px] ${COL_SPAN_RESPONSIVE[col.span] || ''}`}
                         >
                           {blocksInCol.map((cb) => (
                             <BlockRenderer
@@ -203,8 +201,8 @@ export default function PageDetail() {
             })}
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto px-6 py-8">
-            <div className="bg-white rounded-lg shadow p-8">
+          <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+            <div className="bg-white rounded-lg shadow p-4 md:p-8">
               {page.content ? (
                 <div className="text-gray-700 whitespace-pre-wrap">{page.content}</div>
               ) : (
@@ -281,12 +279,12 @@ function HeroRenderer({ settings, fullWidth }) {
 
   return (
     <div
-      className={`flex flex-col justify-center px-8 ${alignClass} ${fullWidth ? '' : 'rounded-lg'}`}
-      style={{ ...bgStyle, height: s.height || 400 }}
+      className={`flex flex-col justify-center px-4 md:px-8 ${alignClass} ${fullWidth ? '' : 'rounded-lg'}`}
+      style={{ ...bgStyle, height: `clamp(200px, 50vw, ${s.height || 400}px)` }}
     >
       <div className={`${fullWidth ? 'max-w-7xl mx-auto w-full' : ''}`}>
         {s.title && (
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-lg">
+          <h1 className="text-2xl md:text-5xl font-bold text-white mb-3 drop-shadow-lg">
             {s.title}
           </h1>
         )}
@@ -317,8 +315,8 @@ function MededelingenRenderer({ settings, items }) {
   const visibleItems = items.slice(0, maxItems)
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">{s.title || 'Mededelingen'}</h2>
+    <div className="bg-white rounded-lg shadow p-4 md:p-6">
+      <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">{s.title || 'Mededelingen'}</h2>
       {visibleItems.length === 0 ? (
         <p className="text-gray-400 text-sm italic">Geen mededelingen.</p>
       ) : (
@@ -346,8 +344,8 @@ function MededelingenRenderer({ settings, items }) {
 // ============================================================
 function GenericBlockRenderer({ title, type }) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">{title}</h2>
+    <div className="bg-white rounded-lg shadow p-4 md:p-6">
+      <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">{title}</h2>
       <p className="text-gray-400 text-sm italic">
         {type === 'weer' && 'Weerswidget wordt binnenkort toegevoegd.'}
         {type === 'nieuws' && 'Nieuwswidget wordt binnenkort toegevoegd.'}

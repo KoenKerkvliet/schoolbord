@@ -49,7 +49,7 @@ export default function SignupPage() {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+        <div className="bg-white rounded-lg shadow-lg p-6 md:p-8 max-w-md w-full text-center">
           <div className="text-green-500 text-5xl mb-4">✓</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Registratie gelukt!</h2>
           <p className="text-gray-600">Je account is aangemaakt. Je wordt doorgestuurd naar inloggen...</p>
@@ -61,10 +61,10 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Het Schoolbord</h1>
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Het Schoolbord</h1>
             <p className="text-gray-600">Maak een account aan</p>
           </div>
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../../services/supabaseClient'
 import { useAuth } from '../../context/AuthContext'
-import SectionLayoutPicker, { LAYOUTS } from './SectionLayoutPicker'
+import SectionLayoutPicker, { LAYOUTS, GRID_COLS_RESPONSIVE, COL_SPAN_RESPONSIVE } from './SectionLayoutPicker'
 import { getBlockType } from './blockTypes'
 
 export default function PageEditor() {
@@ -236,12 +236,12 @@ export default function PageEditor() {
   }
 
   if (loading && !page) {
-    return <div className="p-8 text-gray-600">Laden...</div>
+    return <div className="p-4 md:p-8 text-gray-600">Laden...</div>
   }
 
   if (error && !page) {
     return (
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         <div className="text-red-600 mb-4">{error}</div>
         <Link to="/pages" className="text-blue-600 hover:underline">Terug naar pagina's</Link>
       </div>
@@ -249,10 +249,10 @@ export default function PageEditor() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-5xl">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 md:mb-8">
           <Link
             to="/pages"
             className="text-gray-500 hover:text-gray-700 transition"
@@ -260,7 +260,7 @@ export default function PageEditor() {
             &larr; Terug
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{page?.title}</h1>
+            <h1 className="text-xl md:text-3xl font-bold text-gray-900">{page?.title}</h1>
             <p className="text-sm text-gray-500">Pagina bewerken - secties beheren</p>
           </div>
         </div>
@@ -291,15 +291,15 @@ export default function PageEditor() {
               <div key={section.id}>
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                   {/* Section toolbar */}
-                  <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 px-3 md:px-4 py-2 bg-gray-50 border-b border-gray-200 rounded-t-lg">
+                    <div className="flex items-center gap-2 md:gap-3">
                       <span className="text-xs font-medium text-gray-400">
                         Sectie {idx + 1}
                       </span>
                       <select
                         value={section.layout}
                         onChange={(e) => changeLayout(section.id, e.target.value)}
-                        className="text-xs px-2 py-1 border border-gray-300 rounded bg-white"
+                        className="text-xs px-2 py-1.5 border border-gray-300 rounded bg-white min-h-[36px]"
                       >
                         {LAYOUTS.map((l) => (
                           <option key={l.id} value={l.id}>{l.label}</option>
@@ -310,7 +310,7 @@ export default function PageEditor() {
                       <button
                         onClick={() => moveSection(section.id, -1)}
                         disabled={idx === 0}
-                        className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 disabled:opacity-30"
+                        className="p-2 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-30 min-h-[36px] min-w-[36px] flex items-center justify-center"
                         title="Omhoog"
                       >
                         ↑
@@ -318,14 +318,14 @@ export default function PageEditor() {
                       <button
                         onClick={() => moveSection(section.id, 1)}
                         disabled={idx === sections.length - 1}
-                        className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 disabled:opacity-30"
+                        className="p-2 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-30 min-h-[36px] min-w-[36px] flex items-center justify-center"
                         title="Omlaag"
                       >
                         ↓
                       </button>
                       <button
                         onClick={() => deleteSection(section.id)}
-                        className="px-2 py-1 text-xs text-red-500 hover:text-red-700"
+                        className="px-2 py-1.5 text-xs text-red-500 hover:text-red-700 min-h-[36px] flex items-center"
                         title="Verwijderen"
                       >
                         Verwijder
@@ -335,8 +335,7 @@ export default function PageEditor() {
 
                   {/* Grid with columns */}
                   <div
-                    className="grid gap-3 p-4"
-                    style={{ gridTemplateColumns: `repeat(${layoutConfig.gridCols}, 1fr)` }}
+                    className={`grid gap-3 p-3 md:p-4 grid-cols-1 ${GRID_COLS_RESPONSIVE[layoutConfig.gridCols] || ''}`}
                   >
                     {layoutConfig.columns.map((col, colIdx) => {
                       const blocksInColumn = getColumnBlocks(section.id, colIdx)
@@ -346,8 +345,7 @@ export default function PageEditor() {
                       return (
                         <div
                           key={colIdx}
-                          className="border-2 border-dashed border-gray-200 rounded-lg p-3 min-h-[80px]"
-                          style={{ gridColumn: `span ${col.span}` }}
+                          className={`border-2 border-dashed border-gray-200 rounded-lg p-3 min-h-[80px] ${COL_SPAN_RESPONSIVE[col.span] || ''}`}
                         >
                           {/* Placed blocks */}
                           {blocksInColumn.map((cb) => {
@@ -411,7 +409,7 @@ export default function PageEditor() {
                             <div className="flex justify-center">
                               <button
                                 onClick={() => setPickingBlock(pickKey)}
-                                className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-dashed border-gray-300 text-gray-400 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 transition text-xs"
+                                className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-dashed border-gray-300 text-gray-400 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 transition text-sm"
                                 title="Contentblok toevoegen"
                               >
                                 +
@@ -449,7 +447,7 @@ function AddSectionButton({ onClick }) {
     <div className="flex justify-center py-2">
       <button
         onClick={onClick}
-        className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-dashed border-gray-300 text-gray-400 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 transition"
+        className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-dashed border-gray-300 text-gray-400 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 transition text-lg"
         title="Sectie toevoegen"
       >
         +

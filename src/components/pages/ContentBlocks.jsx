@@ -114,15 +114,15 @@ export default function ContentBlocks() {
   }
 
   if (loading && blocks.length === 0) {
-    return <div className="p-8 text-gray-600">Laden...</div>
+    return <div className="p-4 md:p-8 text-gray-600">Laden...</div>
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-5xl">
-        <div className="flex justify-between items-start mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Contentblokken</h1>
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">Contentblokken</h1>
             <p className="text-gray-600">Beheer herbruikbare contentblokken.</p>
           </div>
           {!showTypePicker && !editingBlock && (
@@ -163,11 +163,11 @@ export default function ContentBlocks() {
 
         {/* Type Picker */}
         {showTypePicker && (
-          <div className="mb-8 bg-white rounded-lg shadow p-6">
-            <h2 className="text-2xl font-bold mb-2">Kies een type</h2>
-            <p className="text-gray-500 text-sm mb-6">Selecteer het raamwerk voor je nieuwe contentblok.</p>
+          <div className="mb-6 md:mb-8 bg-white rounded-lg shadow p-4 md:p-6">
+            <h2 className="text-xl md:text-2xl font-bold mb-2">Kies een type</h2>
+            <p className="text-gray-500 text-sm mb-4 md:mb-6">Selecteer het raamwerk voor je nieuwe contentblok.</p>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {BLOCK_TYPES.map((type) => (
                 <button
                   key={type.id}
@@ -195,10 +195,10 @@ export default function ContentBlocks() {
 
         {/* Editing Panel */}
         {editingBlock && (
-          <div className="mb-8 bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 md:mb-8 bg-white rounded-lg shadow p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
               <div>
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-xl md:text-2xl font-bold">
                   {getBlockType(editingBlock.block_type).label} bewerken
                 </h2>
                 <p className="text-sm text-gray-500">
@@ -241,7 +241,7 @@ export default function ContentBlocks() {
 
         {/* Block List */}
         {blocks.length === 0 && !showTypePicker ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-400">
+          <div className="bg-white rounded-lg shadow p-6 md:p-8 text-center text-gray-400">
             Geen contentblokken. Maak je eerste contentblok aan!
           </div>
         ) : (
@@ -253,13 +253,13 @@ export default function ContentBlocks() {
               return (
                 <div
                   key={block.id}
-                  className={`bg-white rounded-lg shadow p-5 flex items-start justify-between ${
+                  className={`bg-white rounded-lg shadow p-4 md:p-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 ${
                     isEditing ? 'ring-2 ring-blue-500' : ''
                   }`}
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-lg font-semibold text-gray-900">{block.name}</h3>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-1">
+                      <h3 className="text-base md:text-lg font-semibold text-gray-900">{block.name}</h3>
                       <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
                         {typeDef.label}
                       </span>
@@ -269,10 +269,10 @@ export default function ContentBlocks() {
                     </p>
                   </div>
 
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex gap-2">
                     <button
                       onClick={() => setEditingBlock(isEditing ? null : block)}
-                      className={`px-3 py-1 rounded text-sm font-medium transition ${
+                      className={`px-3 py-2 rounded text-sm font-medium transition ${
                         isEditing
                           ? 'bg-blue-600 text-white'
                           : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
@@ -282,7 +282,7 @@ export default function ContentBlocks() {
                     </button>
                     <button
                       onClick={() => deleteBlock(block.id)}
-                      className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm font-medium transition"
+                      className="px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm font-medium transition"
                     >
                       Verwijder
                     </button>
@@ -429,7 +429,7 @@ function HeroSettings({ settings, onUpdate }) {
       </div>
 
       {/* Button */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Knop tekst</label>
           <input
@@ -500,7 +500,7 @@ function HeroPreview({ settings }) {
 
   return (
     <div
-      className={`rounded-lg flex flex-col justify-center px-8 ${alignClass}`}
+      className={`rounded-lg flex flex-col justify-center px-4 md:px-8 ${alignClass}`}
       style={{ ...bgStyle, height: Math.min(settings.height || 400, 300) }}
     >
       {settings.title && (
@@ -626,7 +626,7 @@ function MededelingenSettings({ block, settings, onUpdate }) {
       <div className="border-t pt-5">
         <h4 className="font-semibold text-gray-800 mb-3">Berichten</h4>
 
-        <form onSubmit={addAnnouncement} className="flex gap-3 mb-4">
+        <form onSubmit={addAnnouncement} className="flex flex-col sm:flex-row gap-3 mb-4">
           <input
             type="text"
             value={newMessage}

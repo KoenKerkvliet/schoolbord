@@ -57,11 +57,26 @@ const LAYOUTS = [
 
 export { LAYOUTS }
 
+// Responsive grid helper maps - use Tailwind classes instead of inline styles
+export const GRID_COLS_RESPONSIVE = {
+  1: 'md:grid-cols-1',
+  2: 'md:grid-cols-2',
+  3: 'md:grid-cols-3',
+  4: 'md:grid-cols-4',
+}
+
+export const COL_SPAN_RESPONSIVE = {
+  1: 'md:col-span-1',
+  2: 'md:col-span-2',
+  3: 'md:col-span-3',
+  4: 'md:col-span-4',
+}
+
 export default function SectionLayoutPicker({ onSelect, onCancel }) {
   return (
-    <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6">
+    <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-4 md:p-6">
       <h3 className="text-sm font-semibold text-gray-700 mb-4">Kies een layout</h3>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {LAYOUTS.map((layout) => (
           <button
             key={layout.id}

@@ -7,16 +7,16 @@ export default function Management() {
   const [activeTab, setActiveTab] = useState('organizations')
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-5xl">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Beheer</h1>
-        <p className="text-gray-600 mb-8">Beheer organisaties en gebruikers</p>
+        <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">Beheer</h1>
+        <p className="text-gray-600 mb-6 md:mb-8">Beheer organisaties en gebruikers</p>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-8 border-b border-gray-200">
+        <div className="flex gap-1 mb-6 md:mb-8 border-b border-gray-200">
           <button
             onClick={() => setActiveTab('organizations')}
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition ${
+            className={`px-4 md:px-6 py-3 text-sm font-medium border-b-2 transition ${
               activeTab === 'organizations'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -26,7 +26,7 @@ export default function Management() {
           </button>
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition ${
+            className={`px-4 md:px-6 py-3 text-sm font-medium border-b-2 transition ${
               activeTab === 'users'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -144,9 +144,9 @@ function OrganizationsTab({ userId }) {
       )}
 
       {/* Create org */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-4 md:p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Nieuwe organisatie</h2>
-        <form onSubmit={createOrg} className="flex gap-3">
+        <form onSubmit={createOrg} className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
             value={newOrgName}
@@ -178,46 +178,48 @@ function OrganizationsTab({ userId }) {
         ) : (
           <div className="divide-y divide-gray-100">
             {orgs.map((org) => (
-              <div key={org.id} className="px-6 py-4 flex items-center justify-between">
+              <div key={org.id} className="px-4 md:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 {editingOrg === org.id ? (
-                  <div className="flex-1 flex gap-3 mr-4">
+                  <div className="flex-1 flex flex-col sm:flex-row gap-3">
                     <input
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
                       autoFocus
                       onKeyDown={(e) => e.key === 'Enter' && saveEdit(org.id)}
                     />
-                    <button
-                      onClick={() => saveEdit(org.id)}
-                      className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm font-medium hover:bg-green-200"
-                    >
-                      Opslaan
-                    </button>
-                    <button
-                      onClick={() => setEditingOrg(null)}
-                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200"
-                    >
-                      Annuleer
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => saveEdit(org.id)}
+                        className="px-3 py-2 bg-green-100 text-green-700 rounded text-sm font-medium hover:bg-green-200"
+                      >
+                        Opslaan
+                      </button>
+                      <button
+                        onClick={() => setEditingOrg(null)}
+                        className="px-3 py-2 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200"
+                      >
+                        Annuleer
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
-                    <div>
+                    <div className="min-w-0">
                       <span className="font-medium text-gray-900">{org.name}</span>
-                      <span className="ml-3 text-xs text-gray-400">{org.id.slice(0, 8)}...</span>
+                      <span className="ml-3 text-xs text-gray-400 hidden sm:inline">{org.id.slice(0, 8)}...</span>
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => startEdit(org)}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm font-medium hover:bg-blue-200 transition"
+                        className="px-3 py-2 bg-blue-100 text-blue-700 rounded text-sm font-medium hover:bg-blue-200 transition"
                       >
                         Bewerk
                       </button>
                       <button
                         onClick={() => deleteOrg(org.id, org.name)}
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm font-medium hover:bg-red-200 transition"
+                        className="px-3 py-2 bg-red-100 text-red-700 rounded text-sm font-medium hover:bg-red-200 transition"
                       >
                         Verwijder
                       </button>
@@ -357,7 +359,7 @@ function UsersTab() {
       )}
 
       {/* Add user to org */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-4 md:p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Gebruiker koppelen</h2>
         <form onSubmit={addUser} className="space-y-4">
           <div>
@@ -370,7 +372,7 @@ function UsersTab() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Organisatie</label>
               <select
@@ -422,19 +424,19 @@ function UsersTab() {
         ) : (
           <div className="divide-y divide-gray-100">
             {assignments.map((a) => (
-              <div key={a.id} className="px-6 py-4">
+              <div key={a.id} className="px-4 md:px-6 py-4">
                 {editingUser === a.id ? (
                   <div className="space-y-3">
                     <div className="text-sm text-gray-500">
-                      Gebruiker: <span className="font-mono">{a.user_id.slice(0, 12)}...</span>
+                      Gebruiker: <span className="font-mono text-xs">{a.user_id.slice(0, 12)}...</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Organisatie</label>
                         <select
                           value={editOrgId}
                           onChange={(e) => setEditOrgId(e.target.value)}
-                          className="w-full px-3 py-1 border border-gray-300 rounded text-sm outline-none"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm outline-none"
                         >
                           {orgs.map((org) => (
                             <option key={org.id} value={org.id}>{org.name}</option>
@@ -446,7 +448,7 @@ function UsersTab() {
                         <select
                           value={editRole}
                           onChange={(e) => setEditRole(e.target.value)}
-                          className="w-full px-3 py-1 border border-gray-300 rounded text-sm outline-none"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm outline-none"
                         >
                           <option value="viewer">Viewer</option>
                           <option value="writer">Writer</option>
@@ -457,24 +459,22 @@ function UsersTab() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => saveUserEdit(a)}
-                        className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm font-medium hover:bg-green-200"
+                        className="px-3 py-2 bg-green-100 text-green-700 rounded text-sm font-medium hover:bg-green-200"
                       >
                         Opslaan
                       </button>
                       <button
                         onClick={() => setEditingUser(null)}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200"
+                        className="px-3 py-2 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200"
                       >
                         Annuleer
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <span className="text-sm font-mono text-gray-500">{a.user_id.slice(0, 12)}...</span>
-                      </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <span className="text-xs font-mono text-gray-500 hidden sm:inline">{a.user_id.slice(0, 12)}...</span>
                       <span className="text-sm font-medium text-gray-900">
                         {a.organizations?.name || 'Onbekend'}
                       </span>
@@ -491,13 +491,13 @@ function UsersTab() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => startEditUser(a)}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm font-medium hover:bg-blue-200 transition"
+                        className="px-3 py-2 bg-blue-100 text-blue-700 rounded text-sm font-medium hover:bg-blue-200 transition"
                       >
                         Bewerk
                       </button>
                       <button
                         onClick={() => removeUser(a.id)}
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm font-medium hover:bg-red-200 transition"
+                        className="px-3 py-2 bg-red-100 text-red-700 rounded text-sm font-medium hover:bg-red-200 transition"
                       >
                         Verwijder
                       </button>
