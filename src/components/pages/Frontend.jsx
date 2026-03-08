@@ -10,6 +10,7 @@ export default function Frontend() {
   const [pages, setPages] = useState([])
   const [loading, setLoading] = useState(true)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [newCounts, setNewCounts] = useState({})
   const dropdownRef = useRef(null)
 
   useEffect(() => {
@@ -22,6 +23,11 @@ export default function Frontend() {
       navigate(`/frontend/${pages[0].slug}`, { replace: true })
     }
   }, [loading, pages, location.pathname, navigate])
+
+  // Load notification counts when pages are available or when navigating
+  useEffect(() => {
+    if (pages.length > 0) loadNewCounts()
+  }, [pages, location.pathname])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -62,6 +68,84 @@ export default function Frontend() {
     }
   }
 
+  const loadNewCounts = async () => {
+    try {
+      const pageIds = pages.map((p) => p.id)
+
+      // Load all sections for all pages
+      const { data: sections } = await supabase
+        .from('page_sections')
+        .select('id, page_id')
+        .in('page_id', pageIds)
+
+      if (!sections?.length) { setNewCounts({}); return }
+
+      const sectionIds = sections.map((s) => s.id)
+
+      // Load column blocks
+      const { data: colBlocks } = await supabase
+        .from('section_column_blocks')
+        .select('section_id, content_block_id')
+        .in('section_id', sectionIds)
+
+      if (!colBlocks?.length) { setNewCounts({}); return }
+
+      const blockIds = [...new Set(colBlocks.map((cb) => cb.content_block_id))]
+
+      // Load only mededelingen content blocks
+      const { data: blocks } = await supabase
+        .from('content_blocks')
+        .select('id')
+        .in('id', blockIds)
+        .eq('block_type', 'mededelingen')
+
+      if (!blocks?.length) { setNewCounts({}); return }
+
+      const medBlockIds = blocks.map((b) => b.id)
+
+      // Load announcements
+      const now = new Date().toISOString()
+      const { data: annData } = await supabase
+        .from('announcements')
+        .select('id, content_block_id, created_at')
+        .in('content_block_id', medBlockIds)
+        .lte('publish_at', now)
+        .or(`expires_at.is.null,expires_at.gte.${now}`)
+
+      if (!annData?.length) { setNewCounts({}); return }
+
+      // Build mapping: content_block_id → page_id
+      const sectionToPage = {}
+      for (const s of sections) sectionToPage[s.id] = s.page_id
+
+      const blockToPage = {}
+      for (const cb of colBlocks) {
+        if (sectionToPage[cb.section_id]) {
+          blockToPage[cb.content_block_id] = sectionToPage[cb.section_id]
+        }
+      }
+
+      // Count new announcements per page using localStorage timestamps
+      const counts = {}
+      for (const ann of annData) {
+        const blockId = ann.content_block_id
+        const pageId = blockToPage[blockId]
+        if (!pageId) continue
+
+        const storageKey = `mededelingen_seen_${blockId}`
+        const lastSeen = localStorage.getItem(storageKey)
+
+        if (!lastSeen || new Date(ann.created_at) > new Date(lastSeen)) {
+          counts[pageId] = (counts[pageId] || 0) + 1
+        }
+      }
+
+      setNewCounts(counts)
+    } catch (err) {
+      console.error('Error loading notification counts:', err)
+    }
+  }
+
   const handleLogout = async () => {
     setDropdownOpen(false)
     await logout()
@@ -87,13 +171,18 @@ export default function Frontend() {
                   <Link
                     key={page.id}
                     to={`/frontend/${page.slug}`}
-                    className={`text-sm font-medium border-b-2 transition flex items-center whitespace-nowrap ${
+                    className={`text-sm font-medium border-b-2 transition flex items-center whitespace-nowrap relative ${
                       isActive
                         ? 'text-blue-600 border-blue-600'
                         : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-blue-600'
                     }`}
                   >
                     {page.title}
+                    {newCounts[page.id] > 0 && (
+                      <span className="ml-1.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold text-white bg-red-500 rounded-full px-1 leading-none">
+                        {newCounts[page.id]}
+                      </span>
+                    )}
                   </Link>
                 )
               })}

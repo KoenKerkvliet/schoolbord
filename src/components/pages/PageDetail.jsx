@@ -361,7 +361,7 @@ function MededelingenRenderer({ settings, items, blockId }) {
 
   const isNew = (item) => {
     if (!lastSeen) return true
-    return new Date(item.publish_at || item.created_at) > lastSeen
+    return new Date(item.created_at) > lastSeen
   }
 
   const newCount = visibleItems.filter(isNew).length
@@ -410,6 +410,9 @@ function MededelingenRenderer({ settings, items, blockId }) {
                       Nieuw
                     </span>
                   )}
+                  <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">
+                    {item.author_name || 'Onbekend'}
+                  </span>
                   <span className="text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">
                     {formatDate(item.publish_at || item.created_at)}
                   </span>
@@ -421,14 +424,6 @@ function MededelingenRenderer({ settings, items, blockId }) {
                 className="text-gray-700 prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: item.message }}
               />
-
-              {/* Footer: author + date */}
-              <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
-                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                </svg>
-                <span className="text-xs text-gray-500">{item.author_name || 'Onbekend'}</span>
-              </div>
             </div>
           ))}
         </div>
