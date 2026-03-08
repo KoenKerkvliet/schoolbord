@@ -9,6 +9,7 @@ import Settings from './components/pages/Settings'
 import Content from './components/pages/Content'
 import ContentBlocks from './components/pages/ContentBlocks'
 import Pages from './components/pages/Pages'
+import PageEditor from './components/pages/PageEditor'
 import Frontend from './components/pages/Frontend'
 import PageDetail from './components/pages/PageDetail'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -28,6 +29,7 @@ function App() {
               <Route path="/content" element={<Content />} />
               <Route path="/content-blocks" element={<ContentBlocks />} />
               <Route path="/pages" element={<Pages />} />
+              <Route path="/pages/:pageId/edit" element={<PageEditor />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
             </Route>

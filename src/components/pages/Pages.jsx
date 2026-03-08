@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../services/supabaseClient'
 
@@ -344,6 +345,12 @@ export default function Pages() {
                 </div>
 
                 <div className="flex gap-2 ml-4">
+                  <Link
+                    to={`/pages/${page.id}/edit`}
+                    className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-sm font-medium transition"
+                  >
+                    Secties
+                  </Link>
                   <button
                     onClick={() => togglePublish(page)}
                     className={`px-3 py-1 rounded text-sm font-medium transition ${
