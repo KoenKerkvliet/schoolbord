@@ -67,6 +67,7 @@ export function AuthProvider({ children }) {
         await fetchUserRole(sessionUser.id, sessionUser.email)
       } else {
         setUserRole(null)
+        setOrganizationId(null)
       }
       setLoading(false)
     })
@@ -82,8 +83,8 @@ export function AuthProvider({ children }) {
       const { data, error } = await authService.login(email, password)
       if (error) throw error
       setUser(data.user)
-      const role = await fetchUserRole(data.user.id, data.user.email)
-      return { success: true, role }
+      const result = await fetchUserRole(data.user.id, data.user.email)
+      return { success: true, role: result.role }
     } catch (err) {
       setError(err.message)
       return { success: false, error: err.message }
@@ -109,6 +110,7 @@ export function AuthProvider({ children }) {
       if (error) throw error
       setUser(null)
       setUserRole(null)
+      setOrganizationId(null)
       return { success: true }
     } catch (err) {
       setError(err.message)

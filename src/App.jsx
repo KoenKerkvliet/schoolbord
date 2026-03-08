@@ -10,6 +10,7 @@ import Content from './components/pages/Content'
 import ContentBlocks from './components/pages/ContentBlocks'
 import Pages from './components/pages/Pages'
 import PageEditor from './components/pages/PageEditor'
+import Management from './components/pages/Management'
 import Frontend from './components/pages/Frontend'
 import PageDetail from './components/pages/PageDetail'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -30,6 +31,7 @@ function App() {
               <Route path="/content-blocks" element={<ContentBlocks />} />
               <Route path="/pages" element={<Pages />} />
               <Route path="/pages/:pageId/edit" element={<PageEditor />} />
+              <Route path="/beheer" element={<Management />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
             </Route>

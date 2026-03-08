@@ -61,6 +61,11 @@ export default function Sidebar() {
 
       {/* Bottom Section */}
       <div className="border-t border-gray-200 p-4 space-y-1">
+        {isSuperAdmin && (
+          <Link to="/beheer" className={linkClass('/beheer')}>
+            Beheer
+          </Link>
+        )}
         <Link to="/profile" className={linkClass('/profile')}>
           Profiel
         </Link>
