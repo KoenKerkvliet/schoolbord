@@ -124,13 +124,7 @@ export default function Frontend() {
         </div>
       </header>
 
-      {/* White Canvas */}
       <main className="flex-1">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="bg-white rounded-lg shadow min-h-[calc(100vh-8rem)]">
-            {/* Empty canvas - content comes later */}
-          </div>
-        </div>
       </main>
     </div>
   )

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../services/supabaseClient'
 
-const SUPER_ADMIN_EMAIL = 'koen.kerkvliet@movare.nl'
+const SUPER_ADMIN_EMAIL = 'koen.kerkvliet@designpixels.nl'
 
 export default function Settings() {
   const { user } = useAuth()
