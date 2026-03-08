@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-import { authService } from '../services/authService'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '../services/supabaseClient'
 
 const SUPER_ADMIN_EMAIL = 'koen.kerkvliet@designpixels.nl'
@@ -12,13 +11,7 @@ export function AuthProvider({ children }) {
   const [organizationId, setOrganizationId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  const withTimeout = (promise, ms) => {
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout')), ms)
-    )
-    return Promise.race([promise, timeout])
-  }
+  const mountedRef = useRef(true)
 
   const fetchUserRole = async (userId, email) => {
     if (email === SUPER_ADMIN_EMAIL) {
@@ -28,14 +21,17 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      const { data, error } = await withTimeout(
-        supabase
-          .from('user_organization_roles')
-          .select('roles (name), organization_id')
-          .eq('user_id', userId)
-          .limit(1),
-        5000
-      )
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
+
+      const { data, error } = await supabase
+        .from('user_organization_roles')
+        .select('roles (name), organization_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .abortSignal(controller.signal)
+
+      clearTimeout(timeout)
 
       if (error) {
         console.error('Fout bij ophalen gebruikersrol:', error)
@@ -59,57 +55,55 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    let initialCheckDone = false
+    mountedRef.current = true
 
-    const checkAuth = async () => {
-      try {
-        const { data, error } = await authService.getSession()
-        if (error) throw error
-        const sessionUser = data?.session?.user || null
-        setUser(sessionUser)
-        if (sessionUser) {
-          await fetchUserRole(sessionUser.id, sessionUser.email)
-        }
-      } catch (err) {
-        console.error('Auth check error:', err)
-      } finally {
-        initialCheckDone = true
-        setLoading(false)
-      }
-    }
-
-    checkAuth()
-
-    // Safety: force loading off after 8 seconds no matter what
-    const safetyTimer = setTimeout(() => {
-      setLoading(false)
-    }, 8000)
-
-    const { data } = authService.onAuthStateChange(async (event, session) => {
-      // Skip INITIAL_SESSION event - checkAuth handles it
-      if (!initialCheckDone && event === 'INITIAL_SESSION') return
+    // Process a session (user + role) and set loading false
+    const processSession = async (session) => {
+      if (!mountedRef.current) return
 
       const sessionUser = session?.user || null
       setUser(sessionUser)
+
       if (sessionUser) {
         await fetchUserRole(sessionUser.id, sessionUser.email)
       } else {
         setUserRole(null)
         setOrganizationId(null)
       }
-      setLoading(false)
-    })
+
+      if (mountedRef.current) setLoading(false)
+    }
+
+    // Single source of truth: onAuthStateChange
+    // Fires INITIAL_SESSION immediately with stored session from localStorage.
+    // IMPORTANT: defer async work with setTimeout(0) to avoid
+    // potential deadlocks with Supabase's internal auth state machine.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mountedRef.current) return
+        setTimeout(() => processSession(session), 0)
+      }
+    )
+
+    // Safety: force loading off after 4 seconds no matter what
+    const safetyTimer = setTimeout(() => {
+      if (mountedRef.current) {
+        console.warn('Auth safety timer triggered after 4s')
+        setLoading(false)
+      }
+    }, 4000)
 
     return () => {
+      mountedRef.current = false
       clearTimeout(safetyTimer)
-      data?.subscription?.unsubscribe()
+      subscription?.unsubscribe()
     }
   }, [])
 
   const login = async (email, password) => {
     try {
       setError(null)
-      const { data, error } = await authService.login(email, password)
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
       setUser(data.user)
       const result = await fetchUserRole(data.user.id, data.user.email)
@@ -123,7 +117,11 @@ export function AuthProvider({ children }) {
   const signup = async (email, password, fullName) => {
     try {
       setError(null)
-      const { data, error } = await authService.signup(email, password, fullName)
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      })
       if (error) throw error
       return { success: true }
     } catch (err) {
@@ -135,7 +133,7 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       setError(null)
-      const { error } = await authService.logout()
+      const { error } = await supabase.auth.signOut()
       if (error) throw error
       setUser(null)
       setUserRole(null)
