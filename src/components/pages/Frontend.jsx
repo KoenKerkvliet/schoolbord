@@ -103,6 +103,7 @@ export default function Frontend() {
               </div>
             </div>
           </div>
+          </div>
 
           {/* Page Navigation */}
           {pages.length > 0 && (
