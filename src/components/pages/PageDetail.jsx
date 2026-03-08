@@ -182,10 +182,10 @@ export default function PageDetail() {
               return (
                 <div
                   key={section.id}
-                  className="max-w-7xl mx-auto px-4 md:px-6 py-4"
+                  className="max-w-7xl mx-auto px-4 md:px-6 py-8"
                 >
                   <div
-                    className={`grid gap-4 grid-cols-1 ${GRID_COLS_RESPONSIVE[layoutConfig.gridCols] || ''}`}
+                    className={`grid gap-8 grid-cols-1 ${GRID_COLS_RESPONSIVE[layoutConfig.gridCols] || ''}`}
                   >
                     {layoutConfig.columns.map((col, colIdx) => {
                       const blocksInCol = getColumnBlocks(section.id, colIdx)
@@ -240,28 +240,44 @@ function BlockRenderer({ block, announcements }) {
 
   const parsedBlock = { ...block, settings: parseSettings(block.settings) }
 
+  // Hero renders without a section wrapper
+  if (parsedBlock.block_type === 'hero') {
+    return <HeroRenderer settings={parsedBlock.settings} />
+  }
+
+  let content
   switch (parsedBlock.block_type) {
-    case 'hero':
-      return <HeroRenderer settings={parsedBlock.settings} />
     case 'mededelingen':
-      return (
+      content = (
         <MededelingenRenderer
           settings={parsedBlock.settings}
           items={announcements[parsedBlock.id] || []}
           blockId={parsedBlock.id}
         />
       )
+      break
     case 'weer':
-      return <WeerRenderer settings={parsedBlock.settings} />
+      content = <WeerRenderer settings={parsedBlock.settings} />
+      break
     case 'nieuws':
-      return <GenericBlockRenderer title={parsedBlock.settings?.title || 'Nieuws'} type="nieuws" />
+      content = <GenericBlockRenderer title={parsedBlock.settings?.title || 'Nieuws'} type="nieuws" />
+      break
     case 'beschikbaarheid':
-      return <GenericBlockRenderer title={parsedBlock.settings?.title || 'Beschikbaarheid'} type="beschikbaarheid" />
+      content = <GenericBlockRenderer title={parsedBlock.settings?.title || 'Beschikbaarheid'} type="beschikbaarheid" />
+      break
     case 'aanwezigheid':
-      return <GenericBlockRenderer title={parsedBlock.settings?.title || 'Aanwezigheid'} type="aanwezigheid" />
+      content = <GenericBlockRenderer title={parsedBlock.settings?.title || 'Aanwezigheid'} type="aanwezigheid" />
+      break
     default:
       return null
   }
+
+  // Wrap all non-hero blocks in a section container
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      {content}
+    </div>
+  )
 }
 
 // ============================================================
@@ -358,7 +374,7 @@ function MededelingenRenderer({ settings, items, blockId }) {
     })
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">
         {s.title || 'Mededelingen'}
         {newCount > 0 && (
@@ -493,7 +509,7 @@ function WeerRenderer({ settings }) {
 
   if (!location.trim()) {
     return (
-      <div className="bg-white rounded-lg shadow p-4 md:p-6">
+      <div className="p-4 md:p-6">
         <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Weer</h2>
         <p className="text-gray-400 text-sm italic">Geen locatie ingesteld.</p>
       </div>
@@ -502,7 +518,7 @@ function WeerRenderer({ settings }) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-4 md:p-6">
+      <div className="p-4 md:p-6">
         <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Weer</h2>
         <p className="text-gray-500 text-sm">Weerdata laden...</p>
       </div>
@@ -511,7 +527,7 @@ function WeerRenderer({ settings }) {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow p-4 md:p-6">
+      <div className="p-4 md:p-6">
         <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Weer</h2>
         <p className="text-red-500 text-sm">{error}</p>
       </div>
@@ -531,7 +547,7 @@ function WeerRenderer({ settings }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div>
       {/* Current weather */}
       <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 md:p-6 text-white">
         <div className="flex items-start justify-between mb-2">
@@ -579,7 +595,7 @@ function WeerRenderer({ settings }) {
 // ============================================================
 function GenericBlockRenderer({ title, type }) {
   return (
-    <div className="bg-white rounded-lg shadow p-4 md:p-6">
+    <div className="p-4 md:p-6">
       <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">{title}</h2>
       <p className="text-gray-400 text-sm italic">
         {type === 'nieuws' && 'Nieuwswidget wordt binnenkort toegevoegd.'}
