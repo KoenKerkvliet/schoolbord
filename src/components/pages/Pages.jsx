@@ -9,6 +9,8 @@ export default function Pages() {
   const [error, setError] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [editingPage, setEditingPage] = useState(null)
+  const [organizations, setOrganizations] = useState([])
+  const [selectedOrgId, setSelectedOrgId] = useState(organizationId || '')
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -17,16 +19,29 @@ export default function Pages() {
   })
 
   useEffect(() => {
+    if (isSuperAdmin) {
+      fetchOrganizations()
+    }
+  }, [isSuperAdmin])
+
+  useEffect(() => {
     if (!organizationId && !isSuperAdmin) return
     loadPages()
-  }, [organizationId, isSuperAdmin])
+  }, [organizationId, isSuperAdmin, selectedOrgId])
+
+  const fetchOrganizations = async () => {
+    const { data } = await supabase.from('organizations').select('*').order('name')
+    if (data) setOrganizations(data)
+  }
 
   const loadPages = async () => {
     try {
       setLoading(true)
       let query = supabase.from('pages').select('*')
 
-      if (!isSuperAdmin && organizationId) {
+      if (isSuperAdmin && selectedOrgId) {
+        query = query.eq('organization_id', selectedOrgId)
+      } else if (!isSuperAdmin && organizationId) {
         query = query.eq('organization_id', organizationId)
       }
 
@@ -72,6 +87,12 @@ export default function Pages() {
       return
     }
 
+    const activeOrgId = isSuperAdmin ? selectedOrgId : organizationId
+    if (!activeOrgId) {
+      setError('Selecteer eerst een organisatie')
+      return
+    }
+
     try {
       setLoading(true)
       const pageData = {
@@ -79,7 +100,7 @@ export default function Pages() {
         slug: formData.slug,
         content: formData.content,
         is_published: formData.is_published,
-        organization_id: organizationId,
+        organization_id: activeOrgId,
         created_by: user.id,
       }
 
@@ -184,6 +205,22 @@ export default function Pages() {
             </button>
           )}
         </div>
+
+        {isSuperAdmin && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Organisatie</label>
+            <select
+              value={selectedOrgId}
+              onChange={(e) => setSelectedOrgId(e.target.value)}
+              className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            >
+              <option value="">Alle organisaties</option>
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>{org.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
