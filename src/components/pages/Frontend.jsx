@@ -1,9 +1,44 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../services/supabaseClient'
+import { useState, useEffect } from 'react'
 
 export default function Frontend() {
-  const { user, logout, isViewer } = useAuth()
+  const { user, logout, isViewer, organizationId, isSuperAdmin } = useAuth()
   const navigate = useNavigate()
+  const [pages, setPages] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadPages()
+  }, [organizationId, isSuperAdmin])
+
+  const loadPages = async () => {
+    try {
+      setLoading(true)
+      let query = supabase
+        .from('pages')
+        .select('*')
+        .eq('is_published', true)
+        .order('created_at', { ascending: true })
+
+      if (!isSuperAdmin && organizationId) {
+        query = query.eq('organization_id', organizationId)
+      } else if (!isSuperAdmin && !organizationId) {
+        // Viewer without organization can't see pages
+        setPages([])
+        return
+      }
+
+      const { data } = await query
+      setPages(data || [])
+    } catch (err) {
+      console.error('Error loading pages:', err)
+      setPages([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -14,14 +49,16 @@ export default function Frontend() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/frontend" className="text-xl font-bold text-blue-600">
-            Het Schoolbord
-          </Link>
+        <div className="flex flex-col">
+          {/* Top bar */}
+          <div className="max-w-7xl mx-auto w-full px-6 h-16 flex items-center justify-between">
+            {/* Logo */}
+            <Link to="/frontend" className="text-xl font-bold text-blue-600">
+              Het Schoolbord
+            </Link>
 
-          {/* Right side */}
-          <div className="flex items-center gap-4">
+            {/* Right side */}
+            <div className="flex items-center gap-4">
             {/* Dashboard button - not for viewers */}
             {!isViewer && (
               <Link
@@ -66,6 +103,23 @@ export default function Frontend() {
               </div>
             </div>
           </div>
+
+          {/* Page Navigation */}
+          {pages.length > 0 && (
+            <nav className="max-w-7xl mx-auto w-full px-6 border-t border-gray-100">
+              <div className="flex gap-6 h-12">
+                {pages.map((page) => (
+                  <Link
+                    key={page.id}
+                    to={`/frontend/${page.slug}`}
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-blue-600 transition flex items-center"
+                  >
+                    {page.title}
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          )}
         </div>
       </header>
 

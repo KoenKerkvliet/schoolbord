@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 export default function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { logout, user } = useAuth()
+  const { logout, user, isAdmin, isSuperAdmin } = useAuth()
 
   const handleLogout = async () => {
     await logout()
@@ -41,18 +41,22 @@ export default function Sidebar() {
           Dashboard
         </Link>
 
-        <div className="pt-4 pb-1">
-          <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Content</p>
-        </div>
-        <Link to="/content" className={linkClass('/content')}>
-          Content
-        </Link>
-        <Link to="/content-blocks" className={linkClass('/content-blocks')}>
-          Contentblokken
-        </Link>
-        <Link to="/pages" className={linkClass('/pages')}>
-          Pagina's
-        </Link>
+        {(isAdmin || isSuperAdmin) && (
+          <>
+            <div className="pt-4 pb-1">
+              <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Admin</p>
+            </div>
+            <Link to="/content" className={linkClass('/content')}>
+              Content
+            </Link>
+            <Link to="/content-blocks" className={linkClass('/content-blocks')}>
+              Contentblokken
+            </Link>
+            <Link to="/pages" className={linkClass('/pages')}>
+              Pagina's
+            </Link>
+          </>
+        )}
       </nav>
 
       {/* Bottom Section */}

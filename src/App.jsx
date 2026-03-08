@@ -10,6 +10,7 @@ import Content from './components/pages/Content'
 import ContentBlocks from './components/pages/ContentBlocks'
 import Pages from './components/pages/Pages'
 import Frontend from './components/pages/Frontend'
+import PageDetail from './components/pages/PageDetail'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/frontend" element={<Frontend />} />
+            <Route path="/frontend/:pageSlug" element={<PageDetail />} />
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/content" element={<Content />} />

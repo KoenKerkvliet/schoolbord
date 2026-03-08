@@ -9,29 +9,34 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [userRole, setUserRole] = useState(null)
+  const [organizationId, setOrganizationId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const fetchUserRole = async (userId, email) => {
     if (email === SUPER_ADMIN_EMAIL) {
       setUserRole('super_admin')
-      return 'super_admin'
+      setOrganizationId(null) // Super admin not tied to single org
+      return { role: 'super_admin', organizationId: null }
     }
 
     try {
       const { data } = await supabase
         .from('user_organization_roles')
-        .select('roles (name)')
+        .select('roles (name), organization_id')
         .eq('user_id', userId)
         .limit(1)
         .single()
 
       const role = data?.roles?.name || null
+      const orgId = data?.organization_id || null
       setUserRole(role)
-      return role
+      setOrganizationId(orgId)
+      return { role, organizationId: orgId }
     } catch {
       setUserRole(null)
-      return null
+      setOrganizationId(null)
+      return { role: null, organizationId: null }
     }
   }
 
@@ -112,12 +117,14 @@ export function AuthProvider({ children }) {
   }
 
   const isViewer = userRole === 'viewer'
+  const isAdmin = userRole === 'admin'
 
   return (
     <AuthContext.Provider
       value={{
         user,
         userRole,
+        organizationId,
         loading,
         error,
         login,
@@ -125,6 +132,7 @@ export function AuthProvider({ children }) {
         logout,
         isAuthenticated: !!user,
         isViewer,
+        isAdmin,
         isSuperAdmin: user?.email === SUPER_ADMIN_EMAIL,
       }}
     >

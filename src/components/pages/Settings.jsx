@@ -32,6 +32,7 @@ export default function Settings() {
 }
 
 function SuperAdminPanel() {
+  const { user } = useAuth()
   const [orgs, setOrgs] = useState([])
   const [users, setUsers] = useState([])
   const [newOrgName, setNewOrgName] = useState('')
@@ -73,13 +74,37 @@ function SuperAdminPanel() {
     setLoading(true)
     setMessage('')
 
-    const { error } = await supabase.from('organizations').insert({ name: newOrgName.trim() })
-    if (error) {
-      setMessage(`Fout: ${error.message}`)
-    } else {
-      setMessage(`Organisatie "${newOrgName}" aangemaakt!`)
+    try {
+      // Create organization
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .insert({ name: newOrgName.trim() })
+        .select()
+        .single()
+
+      if (orgError) throw orgError
+
+      // Create Home page for the new organization
+      const { error: pageError } = await supabase.from('pages').insert({
+        organization_id: orgData.id,
+        title: 'Home',
+        slug: 'home',
+        content: 'Welkom op onze website!',
+        is_published: true,
+        created_by: user.id,
+      })
+
+      if (pageError) {
+        console.error('Fout bij aanmaken Home pagina:', pageError)
+        setMessage(`Organisatie aangemaakt, maar kon Home pagina niet aanmaken: ${pageError.message}`)
+      } else {
+        setMessage(`Organisatie "${newOrgName}" aangemaakt met Home pagina!`)
+      }
+
       setNewOrgName('')
       fetchOrgs()
+    } catch (error) {
+      setMessage(`Fout: ${error.message}`)
     }
     setLoading(false)
   }
