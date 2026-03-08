@@ -58,15 +58,34 @@ export default function PageEditor() {
       if (error) throw error
       setSections(data || [])
 
-      // Load column blocks for all sections
+      // Load column blocks and content blocks separately
       if (data && data.length > 0) {
         const sectionIds = data.map((s) => s.id)
         const { data: cbData } = await supabase
           .from('section_column_blocks')
-          .select('*, content_blocks (*)')
+          .select('*')
           .in('section_id', sectionIds)
           .order('position', { ascending: true })
-        setColumnBlocks(cbData || [])
+
+        const cbRows = cbData || []
+        if (cbRows.length > 0) {
+          const blockIds = [...new Set(cbRows.map((cb) => cb.content_block_id))]
+          const { data: blocksData } = await supabase
+            .from('content_blocks')
+            .select('*')
+            .in('id', blockIds)
+
+          const blocksMap = {}
+          for (const b of blocksData || []) {
+            blocksMap[b.id] = b
+          }
+          setColumnBlocks(cbRows.map((cb) => ({
+            ...cb,
+            content_blocks: blocksMap[cb.content_block_id] || null,
+          })))
+        } else {
+          setColumnBlocks([])
+        }
       } else {
         setColumnBlocks([])
       }

@@ -45,36 +45,62 @@ export default function PageDetail() {
 
       setSections(sectionsData || [])
 
-      // Load column blocks with content_blocks data
+      // Load column blocks and content blocks separately (more reliable than FK join)
       if (sectionsData && sectionsData.length > 0) {
         const sectionIds = sectionsData.map((s) => s.id)
-        const { data: cbData } = await supabase
+
+        const { data: cbData, error: cbError } = await supabase
           .from('section_column_blocks')
-          .select('*, content_blocks (*)')
+          .select('*')
           .in('section_id', sectionIds)
           .order('position', { ascending: true })
 
-        setColumnBlocks(cbData || [])
+        if (cbError) console.error('Error loading column blocks:', cbError)
 
-        // Load announcements for mededelingen blocks
-        const mededelingenBlockIds = (cbData || [])
-          .filter((cb) => cb.content_blocks?.block_type === 'mededelingen')
-          .map((cb) => cb.content_blocks.id)
+        const cbRows = cbData || []
 
-        if (mededelingenBlockIds.length > 0) {
-          const { data: annData } = await supabase
-            .from('announcements')
+        if (cbRows.length > 0) {
+          // Load the actual content blocks separately
+          const blockIds = [...new Set(cbRows.map((cb) => cb.content_block_id))]
+          const { data: blocksData, error: blocksError } = await supabase
+            .from('content_blocks')
             .select('*')
-            .in('content_block_id', mededelingenBlockIds)
-            .order('created_at', { ascending: false })
+            .in('id', blockIds)
 
-          // Group by content_block_id
-          const grouped = {}
-          for (const ann of annData || []) {
-            if (!grouped[ann.content_block_id]) grouped[ann.content_block_id] = []
-            grouped[ann.content_block_id].push(ann)
+          if (blocksError) console.error('Error loading content blocks:', blocksError)
+
+          // Merge content_blocks into column block rows
+          const blocksMap = {}
+          for (const b of blocksData || []) {
+            blocksMap[b.id] = b
           }
-          setAnnouncements(grouped)
+          const merged = cbRows.map((cb) => ({
+            ...cb,
+            content_blocks: blocksMap[cb.content_block_id] || null,
+          }))
+          setColumnBlocks(merged)
+
+          // Load announcements for mededelingen blocks
+          const mededelingenBlockIds = merged
+            .filter((cb) => cb.content_blocks?.block_type === 'mededelingen')
+            .map((cb) => cb.content_blocks.id)
+
+          if (mededelingenBlockIds.length > 0) {
+            const { data: annData } = await supabase
+              .from('announcements')
+              .select('*')
+              .in('content_block_id', mededelingenBlockIds)
+              .order('created_at', { ascending: false })
+
+            const grouped = {}
+            for (const ann of annData || []) {
+              if (!grouped[ann.content_block_id]) grouped[ann.content_block_id] = []
+              grouped[ann.content_block_id].push(ann)
+            }
+            setAnnouncements(grouped)
+          }
+        } else {
+          setColumnBlocks([])
         }
       } else {
         setColumnBlocks([])
@@ -139,7 +165,7 @@ export default function PageDetail() {
                 const block = firstColBlocks[0].content_blocks
                 return (
                   <div key={section.id}>
-                    <HeroRenderer settings={block.settings} fullWidth />
+                    <HeroRenderer settings={parseSettings(block.settings)} fullWidth />
                   </div>
                 )
               }
@@ -195,27 +221,37 @@ export default function PageDetail() {
 // ============================================================
 // Block Renderer - routes to the right renderer per type
 // ============================================================
+function parseSettings(settings) {
+  if (!settings) return {}
+  if (typeof settings === 'string') {
+    try { return JSON.parse(settings) } catch { return {} }
+  }
+  return settings
+}
+
 function BlockRenderer({ block, announcements }) {
   if (!block) return null
 
-  switch (block.block_type) {
+  const parsedBlock = { ...block, settings: parseSettings(block.settings) }
+
+  switch (parsedBlock.block_type) {
     case 'hero':
-      return <HeroRenderer settings={block.settings} />
+      return <HeroRenderer settings={parsedBlock.settings} />
     case 'mededelingen':
       return (
         <MededelingenRenderer
-          settings={block.settings}
-          items={announcements[block.id] || []}
+          settings={parsedBlock.settings}
+          items={announcements[parsedBlock.id] || []}
         />
       )
     case 'weer':
-      return <GenericBlockRenderer title={block.settings?.title || 'Weer'} type="weer" />
+      return <GenericBlockRenderer title={parsedBlock.settings?.title || 'Weer'} type="weer" />
     case 'nieuws':
-      return <GenericBlockRenderer title={block.settings?.title || 'Nieuws'} type="nieuws" />
+      return <GenericBlockRenderer title={parsedBlock.settings?.title || 'Nieuws'} type="nieuws" />
     case 'beschikbaarheid':
-      return <GenericBlockRenderer title={block.settings?.title || 'Beschikbaarheid'} type="beschikbaarheid" />
+      return <GenericBlockRenderer title={parsedBlock.settings?.title || 'Beschikbaarheid'} type="beschikbaarheid" />
     case 'aanwezigheid':
-      return <GenericBlockRenderer title={block.settings?.title || 'Aanwezigheid'} type="aanwezigheid" />
+      return <GenericBlockRenderer title={parsedBlock.settings?.title || 'Aanwezigheid'} type="aanwezigheid" />
     default:
       return null
   }
