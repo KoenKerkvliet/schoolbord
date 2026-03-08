@@ -4,7 +4,6 @@ import LoginPage from './components/auth/LoginPage'
 import SignupPage from './components/auth/SignupPage'
 import DashboardLayout from './components/layout/DashboardLayout'
 import Dashboard from './components/pages/Dashboard'
-import Profile from './components/pages/Profile'
 import Settings from './components/pages/Settings'
 import Content from './components/pages/Content'
 import ContentBlocks from './components/pages/ContentBlocks'
@@ -23,8 +22,10 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/frontend" element={<Frontend />} />
-            <Route path="/frontend/:pageSlug" element={<PageDetail />} />
+            <Route path="/frontend" element={<Frontend />}>
+              <Route index element={null} />
+              <Route path=":pageSlug" element={<PageDetail />} />
+            </Route>
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/content" element={<Content />} />
@@ -32,7 +33,6 @@ function App() {
               <Route path="/pages" element={<Pages />} />
               <Route path="/pages/:pageId/edit" element={<PageEditor />} />
               <Route path="/beheer" element={<Management />} />
-              <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>

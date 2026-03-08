@@ -126,7 +126,7 @@ export default function PageDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <div className="text-gray-600">Laden...</div>
       </div>
     )
@@ -134,8 +134,8 @@ export default function PageDetail() {
 
   if (error || !page) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Pagina niet gevonden</h1>
+      <div className="flex flex-col items-center justify-center py-20">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Pagina niet gevonden</h1>
         <Link to="/frontend" className="text-blue-600 hover:underline">
           Terug naar homepage
         </Link>
@@ -144,8 +144,7 @@ export default function PageDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="flex-1">
+    <div>
         {sections.length > 0 ? (
           <div>
             {sections.map((section) => {
@@ -211,7 +210,6 @@ export default function PageDetail() {
             </div>
           </div>
         )}
-      </main>
     </div>
   )
 }

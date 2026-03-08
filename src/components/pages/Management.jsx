@@ -240,6 +240,7 @@ function OrganizationsTab({ userId }) {
 function UsersTab() {
   const [assignments, setAssignments] = useState([])
   const [orgs, setOrgs] = useState([])
+  const [userNames, setUserNames] = useState({}) // user_id -> { email, name }
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
 
@@ -269,7 +270,22 @@ function UsersTab() {
         .order('created_at', { ascending: false }),
       supabase.from('organizations').select('*').order('name'),
     ])
-    if (assignData) setAssignments(assignData)
+    if (assignData) {
+      setAssignments(assignData)
+      // Fetch user names/emails from auth_users_view
+      const userIds = [...new Set(assignData.map((a) => a.user_id))]
+      if (userIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('auth_users_view')
+          .select('id, email')
+          .in('id', userIds)
+        const nameMap = {}
+        for (const u of usersData || []) {
+          nameMap[u.id] = u.email
+        }
+        setUserNames(nameMap)
+      }
+    }
     if (orgData) setOrgs(orgData)
     setLoading(false)
   }
@@ -428,7 +444,7 @@ function UsersTab() {
                 {editingUser === a.id ? (
                   <div className="space-y-3">
                     <div className="text-sm text-gray-500">
-                      Gebruiker: <span className="font-mono text-xs">{a.user_id.slice(0, 12)}...</span>
+                      Gebruiker: <span className="font-medium text-gray-900">{userNames[a.user_id] || a.user_id.slice(0, 12) + '...'}</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
@@ -474,8 +490,11 @@ function UsersTab() {
                 ) : (
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <span className="text-xs font-mono text-gray-500 hidden sm:inline">{a.user_id.slice(0, 12)}...</span>
                       <span className="text-sm font-medium text-gray-900">
+                        {userNames[a.user_id] || a.user_id.slice(0, 12) + '...'}
+                      </span>
+                      <span className="text-xs text-gray-400">•</span>
+                      <span className="text-sm text-gray-600">
                         {a.organizations?.name || 'Onbekend'}
                       </span>
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${

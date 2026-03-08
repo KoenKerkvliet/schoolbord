@@ -99,15 +99,12 @@ export default function Sidebar({ open, onClose }) {
               Beheer
             </Link>
           )}
-          <Link to="/profile" onClick={handleLinkClick} className={linkClass('/profile')}>
-            Profiel
-          </Link>
           <Link to="/settings" onClick={handleLinkClick} className={linkClass('/settings')}>
             Instellingen
           </Link>
           <button
             onClick={() => { handleLinkClick(); handleLogout() }}
-            className="w-full flex items-center px-4 py-2.5 min-h-[44px] text-left rounded-lg font-medium text-red-600 hover:bg-red-50 transition"
+            className="w-full flex items-center px-4 py-2.5 min-h-[44px] text-left rounded-lg font-medium text-red-600 hover:bg-red-50 transition cursor-pointer"
           >
             Uitloggen
           </button>

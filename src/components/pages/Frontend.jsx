@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../services/supabaseClient'
 import { useState, useEffect, useRef } from 'react'
@@ -102,22 +102,15 @@ export default function Frontend() {
                 {dropdownOpen && (
                   <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                     <Link
-                      to="/profile"
-                      onClick={() => setDropdownOpen(false)}
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg"
-                    >
-                      Profiel
-                    </Link>
-                    <Link
                       to="/settings"
                       onClick={() => setDropdownOpen(false)}
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg"
                     >
                       Instellingen
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-b-lg"
+                      className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-b-lg cursor-pointer"
                     >
                       Uitloggen
                     </button>
@@ -147,6 +140,7 @@ export default function Frontend() {
       </header>
 
       <main className="flex-1">
+        <Outlet />
       </main>
     </div>
   )
