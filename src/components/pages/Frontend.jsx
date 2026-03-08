@@ -1,4 +1,4 @@
-import { Link, useNavigate, Outlet } from 'react-router-dom'
+import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../services/supabaseClient'
 import { useState, useEffect, useRef } from 'react'
@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react'
 export default function Frontend() {
   const { user, logout, isViewer, organizationId, isSuperAdmin } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [pages, setPages] = useState([])
   const [loading, setLoading] = useState(true)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -14,6 +15,13 @@ export default function Frontend() {
   useEffect(() => {
     loadPages()
   }, [organizationId, isSuperAdmin])
+
+  // Auto-redirect to first page when on /frontend index
+  useEffect(() => {
+    if (!loading && pages.length > 0 && location.pathname === '/frontend') {
+      navigate(`/frontend/${pages[0].slug}`, { replace: true })
+    }
+  }, [loading, pages, location.pathname, navigate])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -124,15 +132,22 @@ export default function Frontend() {
           {pages.length > 0 && (
             <nav className="max-w-7xl mx-auto w-full px-4 md:px-6 border-t border-gray-100">
               <div className="flex gap-4 md:gap-6 h-12 overflow-x-auto">
-                {pages.map((page) => (
-                  <Link
-                    key={page.id}
-                    to={`/frontend/${page.slug}`}
-                    className="text-sm font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-blue-600 transition flex items-center whitespace-nowrap"
-                  >
-                    {page.title}
-                  </Link>
-                ))}
+                {pages.map((page) => {
+                  const isActive = location.pathname === `/frontend/${page.slug}`
+                  return (
+                    <Link
+                      key={page.id}
+                      to={`/frontend/${page.slug}`}
+                      className={`text-sm font-medium border-b-2 transition flex items-center whitespace-nowrap ${
+                        isActive
+                          ? 'text-blue-600 border-blue-600'
+                          : 'text-gray-600 hover:text-gray-900 border-transparent hover:border-blue-600'
+                      }`}
+                    >
+                      {page.title}
+                    </Link>
+                  )
+                })}
               </div>
             </nav>
           )}

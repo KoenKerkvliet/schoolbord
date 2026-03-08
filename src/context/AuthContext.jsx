@@ -56,6 +56,8 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     mountedRef.current = true
+    let resolved = false
+    let safetyTimer = null
 
     // Process a session (user + role) and set loading false
     const processSession = async (session) => {
@@ -71,7 +73,11 @@ export function AuthProvider({ children }) {
         setOrganizationId(null)
       }
 
-      if (mountedRef.current) setLoading(false)
+      if (mountedRef.current) {
+        resolved = true
+        if (safetyTimer) clearTimeout(safetyTimer)
+        setLoading(false)
+      }
     }
 
     // Single source of truth: onAuthStateChange
@@ -85,9 +91,9 @@ export function AuthProvider({ children }) {
       }
     )
 
-    // Safety: force loading off after 4 seconds no matter what
-    const safetyTimer = setTimeout(() => {
-      if (mountedRef.current) {
+    // Safety: force loading off after 4 seconds only if auth hasn't resolved yet
+    safetyTimer = setTimeout(() => {
+      if (mountedRef.current && !resolved) {
         console.warn('Auth safety timer triggered after 4s')
         setLoading(false)
       }
@@ -95,7 +101,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       mountedRef.current = false
-      clearTimeout(safetyTimer)
+      if (safetyTimer) clearTimeout(safetyTimer)
       subscription?.unsubscribe()
     }
   }, [])
