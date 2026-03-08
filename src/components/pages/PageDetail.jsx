@@ -101,6 +101,7 @@ export default function PageDetail() {
               .lte('publish_at', now)
               .or(`expires_at.is.null,expires_at.gte.${now}`)
               .order('publish_at', { ascending: false })
+              .order('created_at', { ascending: false })
 
             const grouped = {}
             for (const ann of annData || []) {
@@ -192,7 +193,7 @@ export default function PageDetail() {
                       return (
                         <div
                           key={colIdx}
-                          className={`min-h-[60px] ${COL_SPAN_RESPONSIVE[col.span] || ''}`}
+                          className={`min-h-[60px] space-y-8 ${COL_SPAN_RESPONSIVE[col.span] || ''}`}
                         >
                           {blocksInCol.map((cb) => (
                             <BlockRenderer
