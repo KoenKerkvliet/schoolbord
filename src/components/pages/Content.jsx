@@ -438,6 +438,7 @@ function MededelingenContentEditor({ block }) {
         publish_at: new Date(publishAt).toISOString(),
         expires_at: expiresAt ? new Date(expiresAt + 'T23:59:59').toISOString() : null,
         created_by: user.id,
+        author_name: user.user_metadata?.full_name || user.email,
       })
 
       if (error) throw error

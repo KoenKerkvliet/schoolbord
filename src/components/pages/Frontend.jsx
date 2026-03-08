@@ -100,38 +100,26 @@ export default function Frontend() {
             </div>
           </nav>
 
-          {/* Right — Dashboard + Profile */}
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            {!isViewer && (
-              <Link
-                to="/dashboard"
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition hidden sm:block"
-              >
-                Dashboard
-              </Link>
-            )}
-
+          {/* Right — Profile icon with dropdown */}
+          <div className="shrink-0">
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 px-2 md:px-3 py-2 rounded-lg hover:bg-gray-100 transition"
+                className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center"
+                aria-label="Profiel"
               >
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium shrink-0">
-                  {user?.user_metadata?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
-                </div>
-                <span className="text-sm text-gray-700 hidden md:block">
-                  {user?.user_metadata?.full_name || user?.email}
-                </span>
+                <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
               </button>
 
               {dropdownOpen && (
                 <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                  {/* Dashboard link in dropdown for mobile */}
                   {!isViewer && (
                     <Link
                       to="/dashboard"
                       onClick={() => setDropdownOpen(false)}
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg sm:hidden"
+                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg"
                     >
                       Dashboard
                     </Link>
@@ -139,7 +127,7 @@ export default function Frontend() {
                   <Link
                     to="/settings"
                     onClick={() => setDropdownOpen(false)}
-                    className={`block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 ${!isViewer ? 'sm:rounded-t-lg' : 'rounded-t-lg'}`}
+                    className={`block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 ${isViewer ? 'rounded-t-lg' : ''}`}
                   >
                     Instellingen
                   </Link>

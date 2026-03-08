@@ -322,29 +322,50 @@ function MededelingenRenderer({ settings, items }) {
   const maxItems = s.maxItems || 5
   const visibleItems = items.slice(0, maxItems)
 
+  const formatDate = (dateStr) =>
+    new Date(dateStr).toLocaleDateString('nl-NL', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+
   return (
-    <div className="bg-white rounded-lg shadow p-4 md:p-6">
+    <div>
       <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">{s.title || 'Mededelingen'}</h2>
       {visibleItems.length === 0 ? (
         <p className="text-gray-400 text-sm italic">Geen mededelingen.</p>
       ) : (
         <div className="space-y-3">
           {visibleItems.map((item) => (
-            <div key={item.id} className="border-l-4 border-blue-500 pl-4 py-2">
-              {item.title && (
-                <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
-              )}
+            <div
+              key={item.id}
+              className="border border-gray-200 rounded-xl bg-white p-4 md:p-5"
+            >
+              {/* Header: title + date badge */}
+              <div className="flex items-start justify-between gap-3 mb-2">
+                {item.title && (
+                  <h3 className="font-semibold text-gray-900 leading-snug">{item.title}</h3>
+                )}
+                <span className="shrink-0 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">
+                  {formatDate(item.publish_at || item.created_at)}
+                </span>
+              </div>
+
+              {/* Body */}
               <div
-                className="text-gray-800 prose prose-sm max-w-none"
+                className="text-gray-700 prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: item.message }}
               />
-              <p className="text-xs text-gray-400 mt-1">
-                {new Date(item.publish_at || item.created_at).toLocaleDateString('nl-NL', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </p>
+
+              {/* Footer: author */}
+              {item.author_name && (
+                <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
+                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                  </svg>
+                  <span className="text-xs text-gray-500">{item.author_name}</span>
+                </div>
+              )}
             </div>
           ))}
         </div>
