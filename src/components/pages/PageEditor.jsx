@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../../services/supabaseClient'
+import { useAuth } from '../../context/AuthContext'
 import SectionLayoutPicker, { LAYOUTS } from './SectionLayoutPicker'
+import { getBlockType } from './blockTypes'
 
 export default function PageEditor() {
   const { pageId } = useParams()
+  const { organizationId, isSuperAdmin } = useAuth()
   const [page, setPage] = useState(null)
   const [sections, setSections] = useState([])
+  const [columnBlocks, setColumnBlocks] = useState([])
+  const [availableBlocks, setAvailableBlocks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [addingAtPosition, setAddingAtPosition] = useState(null)
+  // Track which column is picking a block: "sectionId-colIdx"
+  const [pickingBlock, setPickingBlock] = useState(null)
 
   useEffect(() => {
     loadPage()
@@ -26,7 +33,17 @@ export default function PageEditor() {
       setError('Pagina niet gevonden')
     } else {
       setPage(data)
+      loadAvailableBlocks(data.organization_id)
     }
+  }
+
+  const loadAvailableBlocks = async (orgId) => {
+    const { data } = await supabase
+      .from('content_blocks')
+      .select('*')
+      .eq('organization_id', orgId)
+      .order('name')
+    setAvailableBlocks(data || [])
   }
 
   const loadSections = async () => {
@@ -40,6 +57,19 @@ export default function PageEditor() {
 
       if (error) throw error
       setSections(data || [])
+
+      // Load column blocks for all sections
+      if (data && data.length > 0) {
+        const sectionIds = data.map((s) => s.id)
+        const { data: cbData } = await supabase
+          .from('section_column_blocks')
+          .select('*, content_blocks (*)')
+          .in('section_id', sectionIds)
+          .order('position', { ascending: true })
+        setColumnBlocks(cbData || [])
+      } else {
+        setColumnBlocks([])
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -49,7 +79,6 @@ export default function PageEditor() {
 
   const addSection = async (layout, atPosition) => {
     try {
-      // Shift positions of sections at or after the insert point
       const toUpdate = sections.filter((s) => s.position >= atPosition)
       for (const section of toUpdate) {
         await supabase
@@ -83,7 +112,6 @@ export default function PageEditor() {
 
       if (error) throw error
 
-      // Renumber positions
       const remaining = sections
         .filter((s) => s.id !== sectionId)
         .sort((a, b) => a.position - b.position)
@@ -142,8 +170,50 @@ export default function PageEditor() {
     }
   }
 
+  const placeBlock = async (sectionId, colIdx, blockId) => {
+    try {
+      // Count existing blocks in this column for position
+      const existing = columnBlocks.filter(
+        (cb) => cb.section_id === sectionId && cb.column_index === colIdx
+      )
+
+      const { error } = await supabase.from('section_column_blocks').insert({
+        section_id: sectionId,
+        column_index: colIdx,
+        content_block_id: blockId,
+        position: existing.length,
+      })
+
+      if (error) throw error
+      setPickingBlock(null)
+      await loadSections()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const removeColumnBlock = async (columnBlockId) => {
+    try {
+      const { error } = await supabase
+        .from('section_column_blocks')
+        .delete()
+        .eq('id', columnBlockId)
+
+      if (error) throw error
+      await loadSections()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const getLayoutConfig = (layoutId) => {
     return LAYOUTS.find((l) => l.id === layoutId) || LAYOUTS[0]
+  }
+
+  const getColumnBlocks = (sectionId, colIdx) => {
+    return columnBlocks.filter(
+      (cb) => cb.section_id === sectionId && cb.column_index === colIdx
+    )
   }
 
   if (loading && !page) {
@@ -184,7 +254,6 @@ export default function PageEditor() {
 
         {/* Sections */}
         <div className="space-y-2">
-          {/* Add button at top if no sections */}
           {sections.length === 0 && addingAtPosition !== 0 && (
             <AddSectionButton onClick={() => setAddingAtPosition(0)} />
           )}
@@ -201,7 +270,6 @@ export default function PageEditor() {
 
             return (
               <div key={section.id}>
-                {/* Section block */}
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                   {/* Section toolbar */}
                   <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200 rounded-t-lg">
@@ -246,22 +314,94 @@ export default function PageEditor() {
                     </div>
                   </div>
 
-                  {/* Grid preview */}
+                  {/* Grid with columns */}
                   <div
                     className="grid gap-3 p-4"
                     style={{ gridTemplateColumns: `repeat(${layoutConfig.gridCols}, 1fr)` }}
                   >
-                    {layoutConfig.columns.map((col, colIdx) => (
-                      <div
-                        key={colIdx}
-                        className="border-2 border-dashed border-gray-200 rounded-lg p-6 flex items-center justify-center min-h-[80px]"
-                        style={{ gridColumn: `span ${col.span}` }}
-                      >
-                        <span className="text-xs text-gray-400">
-                          Kolom {colIdx + 1}
-                        </span>
-                      </div>
-                    ))}
+                    {layoutConfig.columns.map((col, colIdx) => {
+                      const blocksInColumn = getColumnBlocks(section.id, colIdx)
+                      const pickKey = `${section.id}-${colIdx}`
+                      const isPicking = pickingBlock === pickKey
+
+                      return (
+                        <div
+                          key={colIdx}
+                          className="border-2 border-dashed border-gray-200 rounded-lg p-3 min-h-[80px]"
+                          style={{ gridColumn: `span ${col.span}` }}
+                        >
+                          {/* Placed blocks */}
+                          {blocksInColumn.map((cb) => {
+                            const block = cb.content_blocks
+                            const typeDef = getBlockType(block?.block_type)
+                            return (
+                              <div
+                                key={cb.id}
+                                className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded px-3 py-2 mb-2"
+                              >
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-purple-900 truncate">
+                                    {block?.name}
+                                  </p>
+                                  <p className="text-xs text-purple-600">{typeDef.label}</p>
+                                </div>
+                                <button
+                                  onClick={() => removeColumnBlock(cb.id)}
+                                  className="text-red-400 hover:text-red-600 text-xs ml-2 shrink-0"
+                                  title="Verwijderen"
+                                >
+                                  x
+                                </button>
+                              </div>
+                            )
+                          })}
+
+                          {/* Block picker */}
+                          {isPicking ? (
+                            <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                              <p className="text-xs font-medium text-gray-700 mb-2">Kies contentblok</p>
+                              {availableBlocks.length === 0 ? (
+                                <p className="text-xs text-gray-400">
+                                  Geen contentblokken beschikbaar. Maak er eerst een aan bij Contentblokken.
+                                </p>
+                              ) : (
+                                <div className="space-y-1 max-h-48 overflow-y-auto">
+                                  {availableBlocks.map((block) => {
+                                    const typeDef = getBlockType(block.block_type)
+                                    return (
+                                      <button
+                                        key={block.id}
+                                        onClick={() => placeBlock(section.id, colIdx, block.id)}
+                                        className="w-full text-left px-3 py-2 rounded hover:bg-blue-50 transition flex items-center justify-between"
+                                      >
+                                        <span className="text-sm text-gray-900 truncate">{block.name}</span>
+                                        <span className="text-xs text-purple-600 ml-2 shrink-0">{typeDef.label}</span>
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                              <button
+                                onClick={() => setPickingBlock(null)}
+                                className="mt-2 text-xs text-gray-500 hover:text-gray-700"
+                              >
+                                Annuleren
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-center">
+                              <button
+                                onClick={() => setPickingBlock(pickKey)}
+                                className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-dashed border-gray-300 text-gray-400 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 transition text-xs"
+                                title="Contentblok toevoegen"
+                              >
+                                +
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
 
