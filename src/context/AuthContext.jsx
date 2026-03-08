@@ -16,24 +16,32 @@ export function AuthProvider({ children }) {
   const fetchUserRole = async (userId, email) => {
     if (email === SUPER_ADMIN_EMAIL) {
       setUserRole('super_admin')
-      setOrganizationId(null) // Super admin not tied to single org
+      setOrganizationId(null)
       return { role: 'super_admin', organizationId: null }
     }
 
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_organization_roles')
         .select('roles (name), organization_id')
         .eq('user_id', userId)
         .limit(1)
-        .single()
 
-      const role = data?.roles?.name || null
-      const orgId = data?.organization_id || null
+      if (error) {
+        console.error('Fout bij ophalen gebruikersrol:', error)
+        setUserRole(null)
+        setOrganizationId(null)
+        return { role: null, organizationId: null }
+      }
+
+      const first = data?.[0]
+      const role = first?.roles?.name || null
+      const orgId = first?.organization_id || null
       setUserRole(role)
       setOrganizationId(orgId)
       return { role, organizationId: orgId }
-    } catch {
+    } catch (err) {
+      console.error('Onverwachte fout bij ophalen rol:', err)
       setUserRole(null)
       setOrganizationId(null)
       return { role: null, organizationId: null }
@@ -41,6 +49,8 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
+    let initialCheckDone = false
+
     const checkAuth = async () => {
       try {
         const { data, error } = await authService.getSession()
@@ -54,6 +64,7 @@ export function AuthProvider({ children }) {
         console.error('Auth check error:', err)
         setError(err.message)
       } finally {
+        initialCheckDone = true
         setLoading(false)
       }
     }
@@ -61,6 +72,9 @@ export function AuthProvider({ children }) {
     checkAuth()
 
     const { data } = authService.onAuthStateChange(async (event, session) => {
+      // Skip INITIAL_SESSION event - checkAuth handles it
+      if (!initialCheckDone && event === 'INITIAL_SESSION') return
+
       const sessionUser = session?.user || null
       setUser(sessionUser)
       if (sessionUser) {
